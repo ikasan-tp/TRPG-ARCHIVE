@@ -1343,9 +1343,11 @@ function buildViewerHTML(data) {
   }
 
   /* INDEX HTML */
-  const indexHTML = index.map((it, i) =>
-    `<a href="#${it.id}" class="index-link" onclick="closeMenu()">${String(i+1).padStart(2,'0')}￤${esc(it.label)}</a>`
-  ).join('');
+  const indexHTML = index.map((it, i) => {
+    /* 元ラベルに既に番号が含まれている場合（例: "01￤導入"）は除去して再付番 */
+    const cleanLabel = it.label.replace(/^\d+\s*[￤|丨･・\|]\s*/, '').trim();
+    return `<a href="#${it.id}" class="index-link" onclick="closeMenu()">${String(i+1).padStart(2,'0')}￤${esc(cleanLabel)}</a>`;
+  }).join('');
 
   /* フィルタボタン: ファイルに存在するスタイル種別だけ表示 */
   const usedStyles = new Set(rows.filter(r => !r.s).map(r => r.style));
