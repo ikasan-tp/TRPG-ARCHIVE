@@ -586,10 +586,11 @@ body::after {
         </button>
       </div>
       <select class="cb-sort" id="sort" onchange="renderCards()">
+        <option value="sess_a">セッション数↑</option>
+        <option value="sess_d">セッション数↓</option>
         <option value="date_d">最終更新↓</option>
         <option value="date_a">最終更新↑</option>
         <option value="title">タイトル順</option>
-        <option value="sess">セッション数↓</option>
       </select>
     </div>
 
@@ -657,7 +658,7 @@ body::after {
       </select>
     </div>
     <div class="mf">
-      <label>NAME TAG
+      <label>PL NAMES
         <span style="color:#2a2a2a;font-size:.48rem;letter-spacing:.05em;font-weight:400;margin-left:6px;">— タグをクリックして追加</span>
       </label>
       <input id="imp-pl" placeholder="クリックまたは手入力（カンマ区切り）" autocomplete="off" oninput="syncSpeakerTags()">
@@ -976,7 +977,8 @@ function renderCards(){
     if(sort==='date_d')return new Date(b.date)-new Date(a.date);
     if(sort==='date_a')return new Date(a.date)-new Date(b.date);
     if(sort==='title')return a.title.localeCompare(b.title,'ja');
-    if(sort==='sess')return b.sessions-a.sessions;
+    if(sort==='sess_d')return b.sessions-a.sessions;
+    if(sort==='sess_a')return a.sessions-b.sessions;
     return 0;
   });
   const fname=S.folderFilter==='ALL'?'ALL LOGS':(S.folders.find(f=>f.id===S.folderFilter)?.name||'?');
