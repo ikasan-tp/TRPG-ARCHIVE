@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TRPG LOG ARCHIVE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════
+   DESIGN VARIABLES
+══════════════════════════════════════════════ */
+:root {
+  --bg:          #0f0f0f;
+  --bg-deep:     #050505;
+  --text:        #dbdee1;
+  --accent:      #78238C;
+  --accent-dim:  rgba(120,35,140,0.13);
+  --accent-glow: rgba(120,35,140,0.35);
+  --accent-hi:   #a030c8;
+  --border:      #1e1e1e;
+  --border-mid:  #282828;
+  --tab-text:    #666;
+  --ok:   #2a6e40;
+  --err:  #7a2828;
+  --warn: #6e5a1a;
+  --cloud:#1a3a6a;
+  --sidebar-w: 220px;
+  --header-h:   56px;
+  --sysmsg-h:  116px;
+  --upload-w:  196px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { height:100%; -webkit-text-size-adjust:100%; }
+body {
+  height:100%; overflow:hidden;
+  background:var(--bg); color:var(--text);
+  font-family:'Noto Sans JP',sans-serif; line-height:1.7;
+  display:flex; flex-direction:column;
+  position:fixed; width:100%;
+  overscroll-behavior:none;
+}
+body::after {
+  content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);
+  pointer-events:none; z-index:9998;
+}
+
+/* ── SVG ICON HELPERS ── */
+.ico { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ico svg { display:block; }
+
+/* ── HEADER ── */
+#hdr {
+  position:fixed; top:0; left:0; right:0;
+  height:var(--header-h);
+  background:rgba(5,5,5,.97);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  z-index:500;
+  display:flex; align-items:center;
+  padding:0 14px; gap:10px;
+}
+.logo {
+  font-family:'Montserrat'; font-weight:900; font-size:.76rem;
+  color:#fff; letter-spacing:.2em; white-space:nowrap;
+  display:flex; align-items:center; gap:8px;
+  padding-right:14px; border-right:1px solid var(--border);
+  flex-shrink:0;
+}
+.logo-gem {
+  width:8px; height:8px; background:var(--accent);
+  clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  animation:gem 3s ease-in-out infinite;
+}
+@keyframes gem{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+
+#hamburger {
+  display:none; background:none; border:1px solid var(--border);
+  color:var(--tab-text); width:36px; height:36px; border-radius:2px;
+  cursor:pointer; align-items:center; justify-content:center;
+  flex-shrink:0; transition:all .2s;
+}
+#hamburger:hover { border-color:var(--accent); color:var(--accent); }
+
+#back-btn {
+  display:none; align-items:center; gap:7px;
+  font-family:'Montserrat'; font-weight:700; font-size:.62rem;
+  color:#aaa; letter-spacing:.12em;
+  background:none; border:1px solid var(--border-mid);
+  padding:6px 13px; border-radius:2px; cursor:pointer; transition:all .2s;
+  flex-shrink:0;
+}
+#back-btn:hover { border-color:var(--accent); color:#e0b4f0; background:var(--accent-dim); }
+#back-btn.vis { display:flex; }
+
+.sys-tabs { display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; flex:1; padding:0 2px; }
+.sys-tabs::-webkit-scrollbar { display:none; }
+.sys-label { font-family:'Montserrat'; font-weight:900; font-size:.5rem; color:var(--accent); letter-spacing:.28em; white-space:nowrap; flex-shrink:0; padding-right:6px; }
+.stab {
+  font-family:'Montserrat'; font-weight:700; font-size:.58rem;
+  padding:5px 12px; background:transparent;
+  border:1px solid #222; border-radius:2px;
+  color:var(--tab-text); cursor:pointer; white-space:nowrap;
+  transition:all .2s; position:relative; overflow:hidden;
+}
+.stab::after { content:''; position:absolute; bottom:0; left:0; width:0; height:1px; background:var(--accent); transition:width .25s; }
+.stab:hover { color:#aaa; border-color:#3a3a3a; }
+.stab:hover::after { width:100%; }
+.stab.on { background:var(--accent-dim); border-color:var(--accent); color:#e0b4f0; }
+.stab.on::after { width:100%; }
+
+.hdr-right { display:flex; align-items:center; gap:7px; padding-left:10px; border-left:1px solid var(--border); flex-shrink:0; }
+.srch-wrap { position:relative; }
+.srch {
+  width:140px; background:#080808; border:1px solid #1c1c1c;
+  color:var(--text); font-family:'Noto Sans JP'; font-size:.78rem;
+  padding:5px 8px 5px 30px; border-radius:2px; outline:none;
+  transition:border-color .2s, width .3s;
+}
+.srch:focus { border-color:var(--accent); width:180px; }
+.srch::placeholder { color:#282828; }
+.srch-ico { position:absolute; left:8px; top:50%; transform:translateY(-50%); pointer-events:none; }
+
+.btn-p { font-family:'Montserrat'; font-weight:700; font-size:.6rem; padding:6px 13px; background:var(--accent); border:none; border-radius:2px; color:#fff; cursor:pointer; letter-spacing:.1em; transition:all .2s; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
+.btn-p:hover { background:var(--accent-hi); box-shadow:0 0 14px var(--accent-glow); }
+.btn-g { font-family:'Montserrat'; font-weight:700; font-size:.6rem; padding:6px 11px; background:transparent; border:1px solid #2a2a2a; border-radius:2px; color:#666; cursor:pointer; letter-spacing:.1em; transition:all .2s; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
+.btn-g:hover { border-color:#555; color:#ccc; }
+.btn-cloud { font-family:'Montserrat'; font-weight:700; font-size:.6rem; padding:6px 11px; background:transparent; border:1px solid #1a3a6a; border-radius:2px; color:#4a7aaa; cursor:pointer; letter-spacing:.1em; transition:all .2s; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
+.btn-cloud:hover { border-color:#3a6aaa; color:#8ab0d8; background:rgba(26,58,106,.15); }
+
+/* share dropdown */
+.share-wrap { position:relative; }
+.share-menu {
+  position:absolute; top:calc(100% + 6px); right:0;
+  background:#060606; border:1px solid var(--border-mid);
+  border-top:1px solid var(--accent);
+  min-width:200px; z-index:600; display:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.9);
+}
+.share-menu.open { display:block; }
+.smenu-item {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px; cursor:pointer;
+  font-family:'Montserrat'; font-size:.6rem; color:#888;
+  letter-spacing:.08em; border-bottom:1px solid #0e0e0e;
+  transition:all .15s;
+}
+.smenu-item:last-child { border-bottom:none; }
+.smenu-item:hover { color:#ddd; background:var(--accent-dim); }
+.smenu-divider { height:1px; background:#111; margin:2px 0; }
+.smenu-section { padding:6px 14px 4px; font-family:'Montserrat'; font-size:.46rem; color:#2a2a2a; letter-spacing:.2em; }
+
+/* ── LAYOUT ── */
+#workspace { display:flex; height:calc(100vh - var(--header-h)); margin-top:var(--header-h); overflow:hidden; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width:var(--sidebar-w); flex-shrink:0;
+  background:var(--bg-deep); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.sb-sec { border-bottom:1px solid var(--border); flex-shrink:0; }
+.sb-sec.grow { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+.sb-head { display:flex; justify-content:space-between; align-items:center; padding:11px 13px 7px; }
+.nav-lbl { font-family:'Montserrat'; font-weight:900; font-size:.5rem; color:var(--accent); letter-spacing:.32em; }
+.sb-add-btn { background:none; border:none; color:#2e2e2e; cursor:pointer; transition:color .2s; padding:4px; border-radius:2px; display:flex; align-items:center; }
+.sb-add-btn:hover { color:var(--accent); }
+.sb-scroll { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#1a1a1a transparent; }
+.sb-scroll::-webkit-scrollbar { width:3px; }
+.sb-scroll::-webkit-scrollbar-thumb { background:#1a1a1a; border-radius:2px; }
+
+.f-row {
+  width:100%; background:none; border:none;
+  font-family:'Noto Sans JP'; font-size:.74rem;
+  color:#6a6a6a; text-align:left; cursor:pointer;
+  display:flex; align-items:center; gap:7px;
+  border-bottom:1px solid rgba(20,20,20,.8);
+  transition:color .15s, background .15s;
+  position:relative; min-height:42px; padding:0 13px;
+}
+.f-row:hover { color:#ccc; background:rgba(120,35,140,.04); }
+.f-row.sel { color:#e0b4f0; background:var(--accent-dim); }
+.f-row::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--accent); opacity:0; transition:opacity .2s; }
+.f-row.sel::before { opacity:1; }
+.f-cnt { margin-left:auto; font-family:'Montserrat'; font-size:.48rem; color:#282828; background:#0e0e0e; padding:1px 5px; border-radius:10px; flex-shrink:0; }
+.f-row.sel .f-cnt { color:var(--accent); background:var(--accent-dim); }
+.f-del-btn { background:none; border:none; color:#1e1e1e; cursor:pointer; opacity:0; transition:opacity .2s, color .2s; padding:3px 5px; border-radius:2px; display:flex; align-items:center; }
+.f-row:hover .f-del-btn { opacity:1; }
+.f-del-btn:hover { color:#c05050; }
+
+/* ── FOLDER LOG LIST (collapsible) ── */
+.f-log-list { overflow:hidden; max-height:0; transition:max-height .28s cubic-bezier(.4,0,.2,1); background:#030303; border-bottom:1px solid rgba(20,20,20,.6); }
+.f-log-list.open { max-height:400px; }
+.f-log-item {
+  display:flex; align-items:center; gap:7px;
+  padding:5px 13px 5px 28px;
+  font-family:'Noto Sans JP'; font-size:.7rem; color:#484848;
+  cursor:pointer; border-bottom:1px dashed #0d0d0d;
+  transition:color .15s, background .15s;
+  position:relative;
+}
+.f-log-item:hover { color:#bbb; background:rgba(120,35,140,.05); }
+.f-log-item::before { content:''; position:absolute; left:19px; top:50%; transform:translateY(-50%); width:5px; height:1px; background:#222; }
+.f-log-item-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.f-log-item-sys { font-family:'Montserrat'; font-size:.44rem; color:#2a2a2a; flex-shrink:0; }
+.f-toggle-btn {
+  background:none; border:none; color:#2e2e2e; cursor:pointer;
+  display:flex; align-items:center; padding:3px 5px; border-radius:2px;
+  transition:color .2s; flex-shrink:0;
+}
+.f-toggle-btn:hover { color:var(--accent); }
+.f-toggle-ico { transition:transform .25s; display:block; }
+.f-toggle-ico.open { transform:rotate(90deg); }
+
+#sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:498; backdrop-filter:blur(2px); }
+
+/* ── MAIN ── */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.cb { display:flex; align-items:center; gap:9px; padding:9px 16px; border-bottom:1px solid var(--border); background:rgba(5,5,5,.6); flex-shrink:0; }
+.cb-title { font-family:'Montserrat'; font-weight:900; font-size:.7rem; color:#fff; letter-spacing:.14em; }
+.cb-sub { font-family:'Montserrat'; font-size:.5rem; color:#2e2e2e; letter-spacing:.1em; }
+.cb-sort { margin-left:auto; background:var(--bg-deep); border:1px solid #1c1c1c; color:var(--tab-text); font-family:'Montserrat'; font-size:.57rem; padding:5px 9px; border-radius:2px; cursor:pointer; outline:none; }
+.vbtns { display:flex; gap:3px; }
+.vbtn { background:none; border:1px solid #1c1c1c; color:#2e2e2e; width:28px; height:28px; border-radius:2px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.vbtn:hover { border-color:#3a3a3a; color:#777; }
+.vbtn.on { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+#card-area { flex:1; overflow-y:auto; padding:16px; scrollbar-width:thin; scrollbar-color:#1a1a1a transparent; }
+#card-area::-webkit-scrollbar { width:4px; }
+#card-area::-webkit-scrollbar-thumb { background:#1a1a1a; border-radius:2px; }
+
+.cgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:11px; }
+.cgrid.list { grid-template-columns:1fr; gap:5px; }
+
+/* card */
+.sc-card {
+  background:var(--bg-deep); border:1px solid var(--border); border-radius:2px;
+  cursor:pointer; position:relative; overflow:hidden;
+  transition:border-color .25s, box-shadow .25s, transform .2s;
+  animation:cin .32s ease both;
+  -webkit-tap-highlight-color:transparent; user-select:none;
+}
+.sc-card:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.sc-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 15% 15%,var(--accent-glow),transparent 60%); opacity:0; transition:opacity .3s; }
+.sc-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 16px var(--accent-glow); }
+.sc-card:hover::before { opacity:.09; }
+.sc-card:active { transform:translateY(0); }
+@keyframes cin { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+.card-bar { height:2px; background:linear-gradient(90deg,var(--accent),transparent); width:32%; transition:width .3s; }
+.sc-card:hover .card-bar { width:100%; }
+.card-body { padding:12px 13px 9px; }
+.card-sys { font-family:'Montserrat'; font-weight:900; font-size:.47rem; color:var(--accent); letter-spacing:.32em; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+.card-sys::before { content:''; display:inline-block; width:4px; height:4px; background:var(--accent); border-radius:50%; }
+.card-ttl { font-family:'Noto Sans JP'; font-weight:700; font-size:.86rem; color:#eee; margin-bottom:6px; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-tags { display:flex; flex-wrap:wrap; gap:4px; }
+.ctag { font-family:'Montserrat'; font-size:.48rem; padding:2px 7px; border-radius:20px; background:#0e0e0e; border:1px solid #1e1e1e; color:#484848; }
+.ctag.pl { border-color:rgba(120,35,140,.35); color:#9858b8; background:var(--accent-dim); }
+.card-foot { padding:6px 13px; border-top:1px dashed #111; display:flex; justify-content:space-between; align-items:center; }
+.card-date { font-family:'Montserrat'; font-size:.5rem; color:#282828; }
+.card-sess { font-family:'Montserrat'; font-weight:700; font-size:.56rem; color:#3e3e3e; display:flex; align-items:center; gap:3px; }
+.card-sess em { color:var(--accent); font-style:normal; font-size:.68rem; }
+.card-actions { position:absolute; top:5px; right:5px; display:flex; gap:3px; opacity:0; transition:opacity .2s; }
+.sc-card:hover .card-actions { opacity:1; }
+.cact { background:#080808; border:1px solid #1e1e1e; color:#3e3e3e; font-size:.52rem; padding:2px 7px; border-radius:2px; cursor:pointer; transition:all .15s; font-family:'Montserrat'; display:flex; align-items:center; gap:4px; min-height:24px; }
+.cact:hover { color:#ccc; border-color:#555; }
+.cact.del:hover { color:#c05050; border-color:#5a2020; }
+
+/* list mode */
+.cgrid.list .sc-card .card-body { display:flex; align-items:center; gap:12px; padding:9px 13px; }
+.cgrid.list .card-bar { display:none; }
+.cgrid.list .card-sys { margin-bottom:0; min-width:82px; }
+.cgrid.list .card-ttl { margin-bottom:0; flex:1; }
+.cgrid.list .card-tags { margin-bottom:0; }
+.cgrid.list .card-foot { border:none; padding:0; flex-shrink:0; }
+
+.empty { grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 30px; gap:10px; text-align:center; opacity:.3; }
+.empty-g { font-family:'Montserrat'; font-weight:900; font-size:3rem; color:#181818; line-height:1; }
+.empty-t { font-family:'Montserrat'; font-size:.56rem; color:#2a2a2a; letter-spacing:.22em; line-height:2; }
+
+/* ── SYSTEM MESSAGES ── */
+#sysmsg { flex-shrink:0; height:var(--sysmsg-h); background:#030303; border-top:1px solid #111; display:flex; flex-direction:column; overflow:hidden; }
+.smsg-head { display:flex; align-items:center; gap:8px; padding:5px 13px; border-bottom:1px solid #0e0e0e; flex-shrink:0; }
+.smsg-lbl { font-family:'Montserrat'; font-weight:900; font-size:.48rem; color:var(--accent); letter-spacing:.28em; }
+.smsg-live { font-family:'Montserrat'; font-size:.44rem; color:#1e1e1e; letter-spacing:.14em; margin-left:auto; }
+.smsg-live.act { color:var(--ok); animation:liveblink 1.2s infinite; }
+@keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.2} }
+.smsg-scroll { flex:1; overflow-y:auto; display:flex; flex-direction:column-reverse; scrollbar-width:thin; scrollbar-color:#0e0e0e transparent; }
+.smsg-scroll::-webkit-scrollbar { width:3px; }
+.smsg-scroll::-webkit-scrollbar-thumb { background:#0e0e0e; }
+.msg-row { display:flex; align-items:baseline; gap:7px; padding:2px 13px; font-family:'Montserrat'; font-size:.56rem; line-height:1.5; animation:msgin .18s ease; }
+@keyframes msgin { from{opacity:0;transform:translateX(-3px)} to{opacity:1;transform:translateX(0)} }
+.msg-ts { color:#1e1e1e; flex-shrink:0; font-size:.46rem; }
+.msg-tp { flex-shrink:0; font-weight:700; font-size:.46rem; letter-spacing:.1em; min-width:38px; }
+.msg-tp.ok{color:var(--ok)} .msg-tp.err{color:var(--err)} .msg-tp.warn{color:var(--warn)} .msg-tp.info{color:#1e3a6a} .msg-tp.sys{color:#2e1a4a} .msg-tp.cloud{color:var(--cloud)}
+.msg-tx { color:#2e2e2e; }
+.msg-tx.hi { color:#787878; }
+
+/* ── UPLOAD PANEL ── */
+#upload-panel { width:var(--upload-w); flex-shrink:0; background:var(--bg-deep); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.dz { margin:10px; border:1px dashed #1e1e1e; border-radius:2px; padding:18px 10px; text-align:center; cursor:pointer; position:relative; flex-shrink:0; transition:all .25s; }
+.dz input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.dz:hover,.dz.over { border-color:var(--accent); background:var(--accent-dim); box-shadow:0 0 16px var(--accent-glow); }
+.dz-ico { display:flex; justify-content:center; margin-bottom:6px; opacity:.28; transition:opacity .2s; }
+.dz:hover .dz-ico,.dz.over .dz-ico { opacity:.9; }
+.dz-t { font-family:'Montserrat'; font-weight:900; font-size:.56rem; color:#303030; letter-spacing:.12em; display:block; margin-bottom:2px; transition:color .2s; }
+.dz:hover .dz-t,.dz.over .dz-t { color:#e0b4f0; }
+.dz-s { font-size:.63rem; color:#1e1e1e; transition:color .2s; }
+.dz:hover .dz-s,.dz.over .dz-s { color:#888; }
+#prog-wrap { margin:0 10px 8px; height:2px; background:#0e0e0e; border-radius:1px; overflow:hidden; flex-shrink:0; }
+#prog-bar { height:100%; width:0%; background:var(--accent); transition:width .3s; box-shadow:0 0 6px var(--accent-glow); }
+#comp-badge { margin:0 10px 8px; padding:5px 9px; background:#070707; border:1px solid #141414; border-radius:2px; font-family:'Montserrat'; font-size:.5rem; color:#2e2e2e; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+#comp-info { color:var(--ok); }
+.up-stats { padding:0 12px 10px; flex-shrink:0; }
+.ustat { display:flex; justify-content:space-between; margin-bottom:4px; }
+.ustat:last-child { margin-bottom:0; }
+.ustat-l { font-family:'Montserrat'; font-size:.48rem; color:#282828; letter-spacing:.1em; }
+.ustat-r { font-family:'Montserrat'; font-weight:700; font-size:.56rem; color:var(--accent); }
+.up-recent { flex:1; overflow:hidden; display:flex; flex-direction:column; border-top:1px solid var(--border); }
+.up-rec-scroll { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#0e0e0e transparent; }
+.up-rec-scroll::-webkit-scrollbar { width:3px; }
+.up-rec-scroll::-webkit-scrollbar-thumb { background:#0e0e0e; }
+.rec-item { padding:8px 12px; border-bottom:1px dashed #0d0d0d; cursor:pointer; transition:background .15s; }
+.rec-item:hover { background:rgba(120,35,140,.04); }
+.rec-ttl { font-size:.72rem; color:#7a7a7a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:1px; }
+.rec-meta { font-family:'Montserrat'; font-size:.47rem; color:#282828; }
+
+/* ── LOG VIEWER ── */
+#log-view { position:fixed; inset:0; z-index:300; background:var(--bg); display:flex; flex-direction:column; opacity:0; visibility:hidden; transition:opacity .35s; }
+#log-view.open { opacity:1; visibility:visible; }
+#log-iframe { flex:1; border:none; width:100%; height:100%; padding-top:var(--header-h); background:var(--bg); }
+#scan { position:fixed; inset:0; z-index:700; background:var(--bg); pointer-events:none; clip-path:inset(0 0 100% 0); }
+.scan-bars { height:100%; width:100%; background:repeating-linear-gradient(0deg,var(--accent-dim) 0px,var(--accent-dim) 1px,transparent 1px,transparent 6px); opacity:.25; }
+
+/* ── MODALS ── */
+.modal-ov { position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:600; display:flex; align-items:center; justify-content:center; opacity:0; visibility:hidden; transition:all .22s; padding:16px; }
+.modal-ov.open { opacity:1; visibility:visible; }
+.modal { background:#070707; border:1px solid var(--border-mid); border-top:2px solid var(--accent); width:420px; max-width:100%; max-height:88vh; overflow-y:auto; padding:24px; position:relative; transform:translateY(7px); transition:transform .22s; box-shadow:0 0 60px rgba(0,0,0,.95),0 0 20px var(--accent-glow); }
+.modal-ov.open .modal { transform:translateY(0); }
+.modal-h { font-family:'Montserrat'; font-weight:900; font-size:.7rem; color:#fff; letter-spacing:.18em; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+.modal-h::before { content:''; width:8px; height:8px; background:var(--accent); clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%); flex-shrink:0; }
+.modal-x { position:absolute; top:13px; right:13px; background:none; border:none; color:#3a3a3a; cursor:pointer; font-size:1rem; transition:color .2s; min-height:36px; min-width:36px; display:flex; align-items:center; justify-content:center; }
+.modal-x:hover { color:#fff; }
+.mf { margin-bottom:12px; }
+.mf label { font-family:'Montserrat'; font-size:.52rem; color:var(--accent); letter-spacing:.2em; display:block; margin-bottom:3px; }
+.mf input, .mf select { width:100%; background:#030303; border:1px solid #1c1c1c; color:var(--text); font-family:'Noto Sans JP'; font-size:.82rem; padding:8px 10px; border-radius:2px; outline:none; transition:border-color .2s; }
+.mf input:focus, .mf select:focus { border-color:var(--accent); }
+.mf input::placeholder { color:#1e1e1e; }
+.modal-act { display:flex; gap:7px; justify-content:flex-end; margin-top:16px; }
+
+/* speaker suggestion tags */
+.sp-tag {
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:'Noto Sans JP'; font-size:.72rem;
+  padding:4px 10px; border-radius:2px;
+  background:#0e0e0e; border:1px solid #2a2a2a;
+  color:#5a5a5a; cursor:pointer;
+  transition:all .18s; white-space:nowrap;
+  line-height:1.4;
+}
+.sp-tag:hover { border-color:var(--accent); color:#ccc; background:var(--accent-dim); }
+.sp-tag.selected {
+  border-color:var(--accent); color:#e0b4f0;
+  background:var(--accent-dim);
+  box-shadow:0 0 6px var(--accent-glow);
+}
+.sp-tag-cnt {
+  font-family:'Montserrat'; font-size:.46rem;
+  color:#2e2e2e; background:#111;
+  padding:1px 5px; border-radius:10px;
+  flex-shrink:0; transition:color .18s;
+}
+.sp-tag.selected .sp-tag-cnt { color:var(--accent); background:rgba(120,35,140,.2); }
+.sp-tag:hover .sp-tag-cnt { color:#888; }
+#folder-modal .modal-h::before { background:#2a7a44; }
+/* edit modal — blue accent */
+#edit-modal .modal { border-top-color:#1a3a5a; }
+#edit-modal .modal-h::before { background:#2a5a8a; }
+/* cloud modal */
+#cloud-modal .modal { border-top-color:#1a3a6a; }
+#cloud-modal .modal-h::before { background:#2a5aaa; }
+
+/* cloud config panel inside modal */
+.cloud-plan {
+  border:1px solid #1a1a1a; border-radius:2px; padding:12px 14px;
+  margin-bottom:12px; cursor:pointer; transition:border-color .2s, background .2s;
+  position:relative;
+}
+.cloud-plan:hover { border-color:#2a2a2a; background:rgba(255,255,255,.01); }
+.cloud-plan.selected { border-color:#3a6aaa; background:rgba(26,58,106,.12); }
+.cloud-plan-h { font-family:'Montserrat'; font-weight:700; font-size:.65rem; color:#aaa; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.cloud-plan-h .badge { font-size:.46rem; padding:2px 7px; border-radius:10px; background:#111; border:1px solid #222; color:#444; }
+.cloud-plan-h .badge.free { color:var(--ok); border-color:var(--ok); }
+.cloud-plan-desc { font-size:.7rem; color:#3e3e3e; line-height:1.6; }
+.cloud-plan.selected .cloud-plan-desc { color:#5e5e5e; }
+.cloud-step { display:flex; gap:10px; margin-bottom:10px; padding:10px 12px; background:#050505; border:1px solid #111; border-radius:2px; }
+.cloud-step-n { font-family:'Montserrat'; font-weight:900; font-size:.6rem; color:var(--accent); flex-shrink:0; padding-top:2px; min-width:16px; }
+.cloud-step-body { font-size:.74rem; color:#4a4a4a; line-height:1.6; }
+.cloud-step-body a { color:#4a7aaa; text-decoration:none; }
+.cloud-step-body a:hover { color:#8ab0d8; }
+.cloud-status { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid #111; border-radius:2px; margin-bottom:12px; }
+.cloud-dot { width:6px; height:6px; border-radius:50%; background:#1e1e1e; flex-shrink:0; }
+.cloud-dot.ok { background:var(--ok); box-shadow:0 0 5px var(--ok); }
+.cloud-dot.err { background:var(--err); }
+.cloud-dot.connecting { background:var(--accent); animation:liveblink 1s infinite; }
+.cloud-status-text { font-family:'Montserrat'; font-size:.56rem; color:#3a3a3a; }
+
+/* share link display */
+.share-link-box { background:#030303; border:1px solid #1c1c1c; border-radius:2px; padding:8px 10px; font-family:'Montserrat'; font-size:.6rem; color:#4a7aaa; word-break:break-all; margin-bottom:8px; }
+
+/* ── EXPORT OVERLAY ── */
+#export-overlay { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:800; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; visibility:hidden; transition:all .25s; gap:16px; }
+#export-overlay.open { opacity:1; visibility:visible; }
+.exp-lbl { font-family:'Montserrat'; font-weight:900; font-size:.72rem; color:#fff; letter-spacing:.2em; }
+.exp-bar-wrap { width:280px; height:3px; background:#1a1a1a; border-radius:2px; overflow:hidden; }
+#exp-bar { height:100%; width:0%; background:var(--accent); transition:width .3s; box-shadow:0 0 8px var(--accent-glow); }
+.exp-sub { font-family:'Montserrat'; font-size:.56rem; color:#444; letter-spacing:.1em; }
+
+/* ── TOAST ── */
+#toast { position:fixed; bottom:calc(24px + var(--safe-b)); right:24px; background:#050505; border:1px solid var(--accent); border-left:3px solid var(--accent); padding:10px 15px; z-index:1000; border-radius:2px; transform:translateX(110%); transition:transform .3s cubic-bezier(.34,1.56,.64,1); box-shadow:0 0 20px rgba(0,0,0,.8),0 0 10px var(--accent-glow); max-width:270px; }
+#toast.show { transform:translateX(0); }
+.toast-l { font-family:'Montserrat'; font-size:.46rem; color:var(--accent); letter-spacing:.22em; display:block; margin-bottom:1px; }
+.toast-t { font-size:.76rem; color:#ccc; }
+
+/* ── MOBILE BOTTOM NAV ── */
+#bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(5,5,5,.97); border-top:1px solid var(--border); padding-bottom:var(--safe-b); z-index:499; }
+.bnav { display:flex; justify-content:space-around; }
+.bnav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 16px; background:none; border:none; color:var(--tab-text); cursor:pointer; transition:color .2s; font-family:'Montserrat'; font-size:.42rem; letter-spacing:.1em; min-width:60px; }
+.bnav-btn:hover, .bnav-btn.active { color:var(--accent); }
+.bnav-ico { display:flex; }
+
+#deco { position:fixed; bottom:18px; left:16px; font-family:'Montserrat'; font-size:.43rem; color:#141414; letter-spacing:.1em; line-height:1.9; pointer-events:none; z-index:1; }
+
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+* { scrollbar-width:thin; scrollbar-color:#1a1a1a transparent; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-thumb { background:#1a1a1a; border-radius:2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:1024px) { #upload-panel { display:none; } :root{--sysmsg-h:98px;} }
+@media (max-width:680px) {
+  :root{--header-h:52px;}
+  #hamburger { display:flex; }
+  .logo span { display:none; }
+  .sys-tabs { display:none; }
+  .hdr-right .srch-wrap { display:none; }
+  #sidebar { position:fixed; top:0; left:0; height:100%; z-index:499; transform:translateX(-100%); border-right:1px solid var(--border-mid); }
+  #sidebar.mobile-open { transform:translateX(0); }
+  #sb-overlay { display:block; }
+  #sysmsg { display:none; }
+  #bottom-nav { display:block; }
+  #card-area { padding-bottom:calc(68px + var(--safe-b)); }
+  .cgrid { grid-template-columns:1fr; }
+  #deco { display:none; }
+  .hdr-right .share-wrap { display:none; }
+  #toast { bottom:calc(78px + var(--safe-b)); right:12px; left:12px; max-width:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════ HEADER ════ -->
+<header id="hdr">
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="メニュー">
+    <!-- hamburger icon -->
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect y="0" width="16" height="1.5" rx=".75" fill="currentColor"/>
+      <rect y="5" width="16" height="1.5" rx=".75" fill="currentColor"/>
+      <rect y="10" width="16" height="1.5" rx=".75" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <div class="logo">
+    <div class="logo-gem"></div>
+    <span>TRPG ARCHIVE</span>
+  </div>
+
+  <button id="back-btn" onclick="navigateToList()" aria-label="一覧に戻る">
+    <!-- chevron left -->
+    <svg width="8" height="12" viewBox="0 0 8 12" fill="none"><path d="M7 1L1 6L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    BACK TO LIST
+  </button>
+
+  <div class="sys-tabs" id="sys-tabs" role="tablist">
+    <span class="sys-label">SYSTEM//</span>
+    <button class="stab on" role="tab" onclick="setSys('ALL',this)">ALL</button>
+    <button class="stab" role="tab" onclick="setSys('CoC 7th',this)">CoC 7th</button>
+    <button class="stab" role="tab" onclick="setSys('CoC 6th',this)">CoC 6th</button>
+    <button class="stab" role="tab" onclick="setSys('Emo-klore',this)">Emo-klore</button>
+    <button class="stab" role="tab" onclick="setSys('その他',this)">OTHER</button>
+  </div>
+
+  <div class="hdr-right">
+    <div class="srch-wrap">
+      <span class="srch-ico">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="#333" stroke-width="1.3"/><line x1="8.7" y1="8.7" x2="12" y2="12" stroke="#333" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </span>
+      <input class="srch" id="srch" type="search" placeholder="検索…" oninput="renderCards()" aria-label="シナリオ検索">
+    </div>
+
+    <div class="share-wrap" id="share-wrap">
+      <button class="btn-g" onclick="toggleShareMenu()" aria-label="共有">
+        <!-- arrows up-down -->
+        <svg width="10" height="12" viewBox="0 0 10 12" fill="none"><path d="M2 4.5L5 1L8 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 7.5L5 11L8 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        SHARE
+      </button>
+      <div class="share-menu" id="share-menu">
+        <div class="smenu-section">LOCAL FILE</div>
+        <div class="smenu-item" onclick="exportAll()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 4 3-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          すべてをエクスポート
+        </div>
+        <div class="smenu-item" onclick="exportFolder()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3a1 1 0 011-1h3l1 1.5h4a1 1 0 011 1V9a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" stroke="currentColor" stroke-width="1.2"/></svg>
+          現在フォルダのみ
+        </div>
+        <div class="smenu-item" onclick="triggerImportBundle()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 8V1M3 4L6 1l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          バンドルをインポート
+        </div>
+        <div class="smenu-divider"></div>
+        <div class="smenu-section">CLOUD SHARE</div>
+        <div class="smenu-item" onclick="openCloudModal()" id="cloud-menu-item">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9 8.5H9.5a2 2 0 000-4 2 2 0 00-3.9-.5A1.5 1.5 0 002.5 7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10l1.5-1.5L8 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="cloud-menu-label">クラウド設定</span>
+        </div>
+      </div>
+      <input type="file" id="import-bundle-input" accept=".trpgarchive.json,.json" style="display:none" onchange="importBundle(this.files[0])">
+    </div>
+
+    <button class="btn-p" onclick="openImportModal()">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="1" x2="5" y2="9" stroke="white" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="5" x2="9" y2="5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+      IMPORT
+    </button>
+  </div>
+</header>
+
+<!-- SCAN -->
+<div id="scan"><div class="scan-bars"></div></div>
+<div id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- ════ WORKSPACE ════ -->
+<div id="workspace">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" aria-label="フォルダナビゲーション">
+    <div class="sb-sec">
+      <div class="sb-head"><span class="nav-lbl">ARCHIVE</span></div>
+      <button class="f-row sel" id="f-all" onclick="setFolder('ALL',this)" aria-label="すべてのログ">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x=".5" y="1.5" width="11" height="9" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M3 5h6M3 7.5h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        <span style="flex:1;text-align:left">すべてのログ</span>
+        <span class="f-cnt" id="cnt-all">0</span>
+      </button>
+    </div>
+    <div class="sb-sec grow">
+      <div class="sb-head">
+        <span class="nav-lbl">FOLDERS</span>
+        <button class="sb-add-btn" onclick="openFolderModal()" aria-label="フォルダ追加">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><line x1="6" y1="2" x2="6" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="sb-scroll" id="folder-tree" role="tree"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main" aria-label="ログ一覧">
+    <div class="cb">
+      <div>
+        <div class="cb-title" id="cb-title">ALL LOGS</div>
+        <div class="cb-sub" id="cb-sub">0 LOGS</div>
+      </div>
+      <div class="vbtns">
+        <button class="vbtn on" id="vb-grid" onclick="setView('grid')" title="グリッド" aria-label="グリッド表示">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4.5" height="4.5" rx=".5" stroke="currentColor" stroke-width="1.1"/><rect x="6.5" y="1" width="4.5" height="4.5" rx=".5" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="6.5" width="4.5" height="4.5" rx=".5" stroke="currentColor" stroke-width="1.1"/><rect x="6.5" y="6.5" width="4.5" height="4.5" rx=".5" stroke="currentColor" stroke-width="1.1"/></svg>
+        </button>
+        <button class="vbtn" id="vb-list" onclick="setView('list')" title="リスト" aria-label="リスト表示">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><line x1="4" y1="3" x2="11" y2="3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="4" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="4" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="2" cy="3" r=".8" fill="currentColor"/><circle cx="2" cy="6" r=".8" fill="currentColor"/><circle cx="2" cy="9" r=".8" fill="currentColor"/></svg>
+        </button>
+      </div>
+      <select class="cb-sort" id="sort" onchange="renderCards()">
+        <option value="date_d">最終更新↓</option>
+        <option value="date_a">最終更新↑</option>
+        <option value="title">タイトル順</option>
+        <option value="sess">セッション数↓</option>
+      </select>
+    </div>
+
+    <div id="card-area" role="list">
+      <div class="cgrid" id="cgrid"></div>
+    </div>
+
+    <div id="sysmsg" aria-live="polite">
+      <div class="smsg-head">
+        <span class="smsg-lbl">SYSTEM MESSAGES</span>
+        <button class="btn-g" style="padding:2px 7px;font-size:.48rem;" onclick="clearMsgs()">CLEAR</button>
+        <span class="smsg-live" id="smsg-live">● STANDBY</span>
+      </div>
+      <div class="smsg-scroll" id="smsg-scroll"></div>
+    </div>
+  </main>
+
+  <!-- UPLOAD PANEL -->
+  <aside id="upload-panel" aria-label="インポートパネル">
+    <div class="sb-head" style="padding:11px 13px 7px;border-bottom:1px solid var(--border);">
+      <span class="nav-lbl">IMPORT</span>
+    </div>
+    <div class="dz" id="dz" role="button" tabindex="0" aria-label="ファイルをドロップ">
+      <input type="file" id="file-input" accept=".html" multiple onchange="handleFiles(this.files)">
+      <div class="dz-ico">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="1.2"/><line x1="14" y1="9" x2="14" y2="19" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9" y1="14" x2="19" y2="14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <span class="dz-t">DROP LOG FILE</span>
+      <div class="dz-s">ococforea .html</div>
+    </div>
+    <div id="prog-wrap"><div id="prog-bar"></div></div>
+    <div id="comp-badge"><span>STORAGE</span><span id="comp-info">—</span></div>
+    <div class="up-stats">
+      <div class="ustat"><span class="ustat-l">TOTAL</span><span class="ustat-r" id="st-total">0</span></div>
+      <div class="ustat"><span class="ustat-l">SYSTEMS</span><span class="ustat-r" id="st-sys">0</span></div>
+      <div class="ustat"><span class="ustat-l">FOLDERS</span><span class="ustat-r" id="st-fold">0</span></div>
+      <div class="ustat"><span class="ustat-l">SAVED</span><span class="ustat-r" id="st-saved">—</span></div>
+    </div>
+    <div class="up-recent">
+      <div class="sb-head" style="padding:9px 12px 7px;border-bottom:1px solid var(--border);">
+        <span class="nav-lbl">RECENT</span>
+      </div>
+      <div class="up-rec-scroll" id="recent-list"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- LOG VIEWER -->
+<div id="log-view" role="region" aria-label="ログビューア">
+  <iframe id="log-iframe" title="ログビューア" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+
+<!-- ════ IMPORT MODAL ════ -->
+<div class="modal-ov" id="import-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('import-modal')">✕</button>
+    <div class="modal-h">LOG IMPORT</div>
+    <div class="mf"><label>SCENARIO TITLE</label><input id="imp-title" placeholder="（HTMLから自動取得）" autocomplete="off"></div>
+    <div class="mf"><label>SYSTEM</label>
+      <select id="imp-sys">
+        <option value="CoC 7th">Call of Cthulhu 7th</option>
+        <option value="CoC 6th">Call of Cthulhu 6th</option>
+        <option value="Emo-klore">Emo-klore</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="mf">
+      <label>NAME TAG
+        <span style="color:#2a2a2a;font-size:.48rem;letter-spacing:.05em;font-weight:400;margin-left:6px;">— タグをクリックして追加</span>
+      </label>
+      <input id="imp-pl" placeholder="クリックまたは手入力（カンマ区切り）" autocomplete="off" oninput="syncSpeakerTags()">
+      <div id="imp-pl-suggestions" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;min-height:24px;"></div>
+    </div>
+    <div class="mf"><label>FOLDER</label><select id="imp-folder"></select></div>
+    <div class="mf"><label>SESSION COUNT</label><input id="imp-sess" type="number" min="1" value="1"></div>
+    <div class="modal-act">
+      <button class="btn-g" onclick="closeModal('import-modal')">CANCEL</button>
+      <button class="btn-p" onclick="confirmImport()">REGISTER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ EDIT MODAL ════ -->
+<div class="modal-ov" id="edit-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('edit-modal')">✕</button>
+    <div class="modal-h">EDIT LOG</div>
+    <input type="hidden" id="edit-id">
+    <div class="mf"><label>SCENARIO TITLE</label><input id="edit-title" autocomplete="off"></div>
+    <div class="mf"><label>SYSTEM</label>
+      <select id="edit-sys">
+        <option value="CoC 7th">Call of Cthulhu 7th</option>
+        <option value="CoC 6th">Call of Cthulhu 6th</option>
+        <option value="Emo-klore">Emo-klore</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="mf"><label>PL NAMES （カンマ区切り）</label><input id="edit-pl" autocomplete="off"></div>
+    <div class="mf">
+      <label>FOLDER <span style="color:#3a3a3a;font-size:.48rem;letter-spacing:.05em;font-weight:400">— ここで移動できます</span></label>
+      <select id="edit-folder"></select>
+    </div>
+    <div class="mf"><label>SESSION COUNT</label><input id="edit-sess" type="number" min="1"></div>
+    <div class="mf"><label>DATE</label><input id="edit-date" type="date"></div>
+    <div class="modal-act">
+      <button class="btn-g" onclick="closeModal('edit-modal')">CANCEL</button>
+      <button class="btn-p" onclick="confirmEdit()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ FOLDER MODAL （シンプル化済み）════ -->
+<div class="modal-ov" id="folder-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('folder-modal')">✕</button>
+    <div class="modal-h">NEW FOLDER</div>
+    <div class="mf">
+      <label>FOLDER NAME</label>
+      <input id="fld-name" placeholder="例：深きものども、CoC 7th" autocomplete="off">
+    </div>
+    <p style="font-size:.72rem;color:#3a3a3a;line-height:1.7;margin-top:4px;">
+      作成後はログの「EDIT」からフォルダを変更できます。
+    </p>
+    <div class="modal-act" style="margin-top:18px;">
+      <button class="btn-g" onclick="closeModal('folder-modal')">CANCEL</button>
+      <button class="btn-p" onclick="confirmFolder()">CREATE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CLOUD MODAL ════ -->
+<div class="modal-ov" id="cloud-modal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-x" onclick="closeModal('cloud-modal')">✕</button>
+    <div class="modal-h">CLOUD SHARE</div>
+
+    <div class="cloud-status" id="cloud-status-bar">
+      <div class="cloud-dot" id="cloud-dot"></div>
+      <span class="cloud-status-text" id="cloud-status-text">未接続 — Firebase APIキーを入力してください</span>
+    </div>
+
+    <!-- Firebase setup steps -->
+    <div style="font-family:'Montserrat';font-size:.52rem;color:var(--accent);letter-spacing:.2em;margin-bottom:10px;">SETUP GUIDE</div>
+
+    <div class="cloud-step">
+      <span class="cloud-step-n">1</span>
+      <div class="cloud-step-body">
+        <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a> でプロジェクトを作成します。<br>
+        「Firestore Database」を有効にし、ルールを <code style="color:#6a6a6a;font-size:.7rem;">allow read, write: if true;</code> に設定します。
+      </div>
+    </div>
+    <div class="cloud-step">
+      <span class="cloud-step-n">2</span>
+      <div class="cloud-step-body">
+        プロジェクトの「設定→全般→マイアプリ→ウェブアプリを追加」でAPIキーを取得します。<br>
+        表示された <code style="color:#6a6a6a;font-size:.7rem;">firebaseConfig</code> の各値を下に貼り付けてください。
+      </div>
+    </div>
+    <div class="cloud-step">
+      <span class="cloud-step-n">3</span>
+      <div class="cloud-step-body">
+        接続後、「CLOUD SHARE」ボタンでアーカイブ全体をFirestoreにアップロードします。<br>
+        共有用URLを相手に送るだけで、スマホから閲覧できます。
+      </div>
+    </div>
+
+    <div class="mf"><label>API KEY</label><input id="fb-api-key" placeholder="AIzaSy…" autocomplete="off"></div>
+    <div class="mf"><label>PROJECT ID</label><input id="fb-project-id" placeholder="my-trpg-archive" autocomplete="off"></div>
+    <div class="mf"><label>AUTH DOMAIN</label><input id="fb-auth-domain" placeholder="my-trpg-archive.firebaseapp.com" autocomplete="off"></div>
+
+    <div class="modal-act" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn-g" onclick="closeModal('cloud-modal')">CLOSE</button>
+      <button class="btn-cloud" onclick="testFirebaseConnection()" id="fb-test-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 3v2.5L6.5 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        接続テスト
+      </button>
+      <button class="btn-p" onclick="cloudUploadAll()" id="fb-upload-btn" disabled style="opacity:.4;">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 7V1M2 4l3-3 3 3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9h8" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+        クラウドにアップロード
+      </button>
+    </div>
+
+    <!-- share link section (shown after upload) -->
+    <div id="cloud-share-section" style="display:none;margin-top:16px;border-top:1px solid #111;padding-top:14px;">
+      <div style="font-family:'Montserrat';font-size:.52rem;color:var(--accent);letter-spacing:.2em;margin-bottom:8px;">SHARE LINK</div>
+      <div class="share-link-box" id="share-link-display">—</div>
+      <div class="modal-act" style="margin-top:8px;">
+        <button class="btn-g" onclick="copyShareLink()">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M7 3V1.5a.5.5 0 00-.5-.5H1.5a.5.5 0 00-.5.5V7a.5.5 0 00.5.5H3" stroke="currentColor" stroke-width="1.1"/></svg>
+          リンクをコピー
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT OVERLAY -->
+<div id="export-overlay" aria-live="polite">
+  <div class="exp-lbl" id="exp-lbl">PROCESSING…</div>
+  <div class="exp-bar-wrap"><div id="exp-bar"></div></div>
+  <div class="exp-sub" id="exp-sub">準備中</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" role="status" aria-live="polite">
+  <span class="toast-l">SYSTEM</span>
+  <span class="toast-t" id="toast-t"></span>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div id="bottom-nav">
+  <div class="bnav">
+    <button class="bnav-btn active" id="bnav-list" onclick="mobileNav('list');setFolder('ALL',document.getElementById('f-all'))">
+      <span class="bnav-ico">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="1" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="10" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="10" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      </span>
+      LIST
+    </button>
+    <button class="bnav-btn" id="bnav-search" onclick="toggleSidebar()">
+      <span class="bnav-ico">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 3a1 1 0 011-1h3l1.5 2H16a1 1 0 011 1v9a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" stroke="currentColor" stroke-width="1.2"/></svg>
+      </span>
+      FOLDER
+    </button>
+    <button class="bnav-btn" id="bnav-import" onclick="openImportModal()">
+      <span class="bnav-ico">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.2"/><line x1="9" y1="5" x2="9" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="5" y1="9" x2="13" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </span>
+      IMPORT
+    </button>
+    <button class="bnav-btn" id="bnav-export" onclick="exportAll()">
+      <span class="bnav-ico">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11V3M5 7l4-4 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 15h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </span>
+      EXPORT
+    </button>
+    <button class="bnav-btn" id="bnav-cloud" onclick="openCloudModal()">
+      <span class="bnav-ico">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13 12.5H13.5a3 3 0 000-6 3 3 0 00-5.8-.8A2.5 2.5 0 003.5 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 14.5l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      CLOUD
+    </button>
+  </div>
+</div>
+
+<div id="deco" aria-hidden="true">IKATOOLBOX ARCHIVE PORTAL<br>ENGINE:ONLINE v2.0.0</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   INDEXED DB
+══════════════════════════════════════════════ */
+const DB_NAME = 'TRPGArchiveV4';
+let db = null;
+function initDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains('blobs'))e.target.result.createObjectStore('blobs',{keyPath:'id'});};r.onsuccess=e=>{db=e.target.result;res(db);};r.onerror=e=>rej(e.target.error);});}
+function dbPut(id,data){return new Promise((res,rej)=>{const tx=db.transaction('blobs','readwrite');tx.objectStore('blobs').put({id,data});tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});}
+function dbGet(id){return new Promise((res,rej)=>{const tx=db.transaction('blobs','readonly');const r=tx.objectStore('blobs').get(id);r.onsuccess=e=>res(e.target.result?.data??null);r.onerror=e=>rej(e.target.error);});}
+function dbDel(id){return new Promise((res,rej)=>{const tx=db.transaction('blobs','readwrite');tx.objectStore('blobs').delete(id);tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);});}
+function dbGetAll(){return new Promise((res,rej)=>{const tx=db.transaction('blobs','readonly');const r=tx.objectStore('blobs').getAll();r.onsuccess=e=>res(e.target.result||[]);r.onerror=e=>rej(e.target.error);});}
+
+/* ── COMPRESSION ── */
+const CAN_COMPRESS = typeof CompressionStream !== 'undefined';
+async function compress(str){
+  if(!CAN_COMPRESS)return{data:str,compressed:false};
+  const bytes=new TextEncoder().encode(str);
+  const stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buf=await new Response(stream).arrayBuffer();
+  const b64=btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return{data:b64,compressed:true,originalSize:bytes.length,size:buf.byteLength};
+}
+async function decompress(s){
+  if(!s||!s.compressed)return s?.data??s;
+  const bin=atob(s.data),bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new TextDecoder().decode(await new Response(stream).arrayBuffer());
+}
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+const META_KEY = 'trpg_meta_v4';
+let S={folders:[],logs:[],sysFilter:'ALL',folderFilter:'ALL',view:'grid'};
+let pendingHTML=null,pendingFile=null;
+let totalOrig=0,totalSaved=0;
+let fbConnected=false;
+
+function loadMeta(){
+  try{const d=JSON.parse(localStorage.getItem(META_KEY)||'{}');S.folders=d.folders||[];S.logs=d.logs||[];totalOrig=d.totalOrig||0;totalSaved=d.totalSaved||0;
+  const fb=d.firebase;if(fb){document.getElementById('fb-api-key').value=fb.apiKey||'';document.getElementById('fb-project-id').value=fb.projectId||'';document.getElementById('fb-auth-domain').value=fb.authDomain||'';}}catch(e){sysMsg('err','メタ読込失敗: '+e.message);}
+}
+function saveMeta(){
+  try{const fb={apiKey:document.getElementById('fb-api-key').value,projectId:document.getElementById('fb-project-id').value,authDomain:document.getElementById('fb-auth-domain').value};
+  localStorage.setItem(META_KEY,JSON.stringify({folders:S.folders,logs:S.logs,totalOrig,totalSaved,firebase:fb}));}catch(e){sysMsg('err','メタ保存失敗: '+e.message);}
+}
+
+/* ══════════════════════════════════════════════
+   SYSTEM MESSAGES
+══════════════════════════════════════════════ */
+function sysMsg(type,text){
+  const w=document.getElementById('smsg-scroll'),l=document.getElementById('smsg-live');
+  const n=new Date(),ts=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  const hi=type==='ok'||type==='err'||type==='warn'||type==='cloud';
+  const r=document.createElement('div');r.className='msg-row';
+  r.innerHTML=`<span class="msg-ts">${ts}</span><span class="msg-tp ${type}">${{ok:'OK',err:'ERR',warn:'WARN',info:'INFO',sys:'SYS',cloud:'CLOUD'}[type]||type}</span><span class="msg-tx${hi?' hi':''}">${escH(text)}</span>`;
+  w.prepend(r);while(w.children.length>80)w.lastChild.remove();
+  l.textContent='● ACTIVE';l.className='smsg-live act';
+  clearTimeout(l._t);l._t=setTimeout(()=>{l.textContent='● STANDBY';l.className='smsg-live';},2500);
+}
+function clearMsgs(){document.getElementById('smsg-scroll').innerHTML='';sysMsg('sys','クリア完了');}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function folderOpts(){
+  return`<option value="">（未分類）</option>`+S.folders.map(f=>`<option value="${f.id}">${escH(f.name)}</option>`).join('');
+}
+/* フォルダごとの展開状態を保持 */
+const folderOpen = {};
+
+function toggleFolderLogs(e, fid) {
+  e.stopPropagation();
+  folderOpen[fid] = !folderOpen[fid];
+  // toggle list visibility
+  const list = document.getElementById('flog-'+fid);
+  const ico  = document.getElementById('ftogico-'+fid);
+  if (list) list.classList.toggle('open', folderOpen[fid]);
+  if (ico)  ico.classList.toggle('open', folderOpen[fid]);
+}
+
+function renderFolders(){
+  document.getElementById('cnt-all').textContent=S.logs.length;
+  document.getElementById('folder-tree').innerHTML=S.folders.map(f=>{
+    const logs=S.logs.filter(l=>l.folder===f.id);
+    const cnt=logs.length;
+    const sel=S.folderFilter===f.id;
+    const isOpen=!!folderOpen[f.id];
+
+    /* ログ一覧 */
+    const logItems = logs.length
+      ? logs.map(l=>`
+        <div class="f-log-item" onclick="openLog('${l.id}')" role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter')openLog('${l.id}')">
+          <span class="f-log-item-title">${escH(l.title)}</span>
+          <span class="f-log-item-sys">${escH(l.system)}</span>
+        </div>`).join('')
+      : `<div style="padding:6px 13px 6px 28px;font-family:'Montserrat';font-size:.48rem;color:#1e1e1e;letter-spacing:.1em">EMPTY</div>`;
+
+    return`
+    <div>
+      <div class="f-row${sel?' sel':''}" role="treeitem" aria-selected="${sel}"
+           onclick="setFolder('${f.id}',this.querySelector('.f-row-label')||this)"
+           style="cursor:pointer">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 2.5a1 1 0 011-1h2.5l1 1.5H9a1 1 0 011 1V8a1 1 0 01-1 1H2a1 1 0 01-1-1V2.5z" stroke="currentColor" stroke-width="1.1"/></svg>
+        <span class="f-row-label" style="flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              onclick="setFolder('${f.id}',this.closest('.f-row'))">${escH(f.name)}</span>
+        <span class="f-cnt">${cnt}</span>
+        <button class="f-toggle-btn" onclick="toggleFolderLogs(event,'${f.id}')"
+                aria-label="ログ一覧を展開/折りたたみ" title="ログ一覧">
+          <svg id="ftogico-${f.id}" class="f-toggle-ico${isOpen?' open':''}" width="7" height="11" viewBox="0 0 7 11" fill="none">
+            <path d="M1.5 1.5L5.5 5.5L1.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="f-del-btn" onclick="deleteFolder(event,'${f.id}')" aria-label="削除">
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><line x1="1" y1="1" x2="8" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="8" y1="1" x2="1" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="flog-${f.id}" class="f-log-list${isOpen?' open':''}">${logItems}</div>
+    </div>`;
+  }).join('');
+  ['imp-folder','edit-folder'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=folderOpts();});
+}
+
+function renderCards(){
+  const grid=document.getElementById('cgrid');
+  const q=document.getElementById('srch').value.toLowerCase().trim();
+  const sort=document.getElementById('sort').value;
+  let logs=S.logs.filter(l=>{
+    const sOk=S.sysFilter==='ALL'||l.system===S.sysFilter;
+    const fOk=S.folderFilter==='ALL'||l.folder===S.folderFilter;
+    const qOk=!q||l.title.toLowerCase().includes(q)||(l.pl||'').toLowerCase().includes(q)||l.system.toLowerCase().includes(q);
+    return sOk&&fOk&&qOk;
+  });
+  logs.sort((a,b)=>{
+    if(sort==='date_d')return new Date(b.date)-new Date(a.date);
+    if(sort==='date_a')return new Date(a.date)-new Date(b.date);
+    if(sort==='title')return a.title.localeCompare(b.title,'ja');
+    if(sort==='sess')return b.sessions-a.sessions;
+    return 0;
+  });
+  const fname=S.folderFilter==='ALL'?'ALL LOGS':(S.folders.find(f=>f.id===S.folderFilter)?.name||'?');
+  document.getElementById('cb-title').textContent=fname;
+  document.getElementById('cb-sub').textContent=`${logs.length} LOG${logs.length!==1?'S':''}`;
+  if(!logs.length){grid.innerHTML=`<div class="empty"><div class="empty-g">∅</div><div class="empty-t">NO LOGS FOUND<br>IMPORT A LOG FILE TO BEGIN</div></div>`;return;}
+  grid.innerHTML=logs.map((l,i)=>{
+    const pls=(l.pl||'').split(',').map(p=>p.trim()).filter(Boolean);
+    return`<div class="sc-card" role="listitem" tabindex="0" onclick="openLog('${l.id}')" onkeydown="if(event.key==='Enter')openLog('${l.id}')" style="animation-delay:${Math.min(i,8)*.038}s" aria-label="${escH(l.title)}">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <div class="card-sys">${escH(l.system)}</div>
+        <div class="card-ttl">${escH(l.title)}</div>
+        <div class="card-tags">${pls.slice(0,4).map(p=>`<span class="ctag pl">${escH(p)}</span>`).join('')}</div>
+      </div>
+      <div class="card-foot">
+        <span class="card-date">${l.date}</span>
+        <span class="card-sess"><em>${l.sessions}</em> SESS</span>
+      </div>
+      <div class="card-actions">
+        <button class="cact" onclick="openEditModal(event,'${l.id}')">
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1 7.5l1.5-1.5L6 2.5l1-1 1 1-1 1L3.5 6.5 2 8H1v-.5z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          EDIT
+        </button>
+        <button class="cact del" onclick="deleteLog(event,'${l.id}')">
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><line x1="1" y1="1" x2="7" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="7" y1="1" x2="1" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  grid.className=`cgrid${S.view==='list'?' list':''}`;
+}
+
+function renderRecent(){
+  const el=document.getElementById('recent-list');
+  const r=[...S.logs].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+  el.innerHTML=r.length?r.map(l=>`<div class="rec-item" onclick="openLog('${l.id}')" role="button" tabindex="0"><div class="rec-ttl">${escH(l.title)}</div><div class="rec-meta">${escH(l.system)} · ${l.date}</div></div>`).join('')
+  :`<div style="padding:14px;font-family:'Montserrat';font-size:.5rem;color:#1e1e1e;text-align:center;letter-spacing:.1em">NO HISTORY</div>`;
+}
+function renderStats(){
+  document.getElementById('st-total').textContent=S.logs.length;
+  document.getElementById('st-sys').textContent=new Set(S.logs.map(l=>l.system)).size;
+  document.getElementById('st-fold').textContent=S.folders.length;
+  const savedKB=Math.round((totalOrig-totalSaved)/1024);
+  const ratio=totalOrig>0?Math.round((1-totalSaved/totalOrig)*100):0;
+  document.getElementById('st-saved').textContent=savedKB>0?`${savedKB} KB`:'—';
+  document.getElementById('comp-info').textContent=totalOrig>0?`${ratio}% reduced`:CAN_COMPRESS?'gzip ready':'unavail.';
+}
+function renderAll(){renderFolders();renderCards();renderRecent();renderStats();}
+
+/* ══════════════════════════════════════════════
+   FILTERS / VIEW
+══════════════════════════════════════════════ */
+function setSys(sys,btn){S.sysFilter=sys;document.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderCards();}
+function setFolder(id, el){
+  S.folderFilter=id;
+  document.querySelectorAll('.f-row').forEach(b=>b.classList.remove('sel'));
+  /* find the .f-row ancestor or the element itself */
+  const row = el?.closest?.('.f-row') || el;
+  if(row) row.classList.add('sel');
+  renderCards();
+  closeSidebar();
+}
+function setView(v){S.view=v;document.getElementById('cgrid').className=`cgrid${v==='list'?' list':''}`;document.getElementById('vb-grid').classList.toggle('on',v==='grid');document.getElementById('vb-list').classList.toggle('on',v==='list');}
+
+/* ══════════════════════════════════════════════
+   FILE HANDLING
+══════════════════════════════════════════════ */
+/* ── 除外する発言者名パターン ──
+   ▽（ナレーター）、数字のみ（ダイス目）、
+   空文字、記号のみ は PL候補から外す        */
+const SPEAKER_EXCLUDE = /^[\d\s▽※【】「」。、！？!?…‥\-\*#・◆◇●○□■▲△▼▽×÷=+]+$/;
+
+function extractSpeakerFrequency(doc) {
+  const freq = new Map();
+  doc.querySelectorAll('.log-row:not(.row-system)').forEach(el => {
+    const nameLine = el.querySelector('.name-line');
+    if (nameLine?.style?.display === 'none') return; /* system行 */
+    const nameEl = el.querySelector('.row-name');
+    if (!nameEl) return;
+    const clone = nameEl.cloneNode(true);
+    clone.querySelectorAll('span').forEach(s => s.remove());
+    const name = clone.textContent.trim();
+    if (!name || SPEAKER_EXCLUDE.test(name)) return;
+    freq.set(name, (freq.get(name) || 0) + 1);
+  });
+  /* 出現回数で降順ソート */
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function handleFiles(f){if(f.length)processFile(f[0]);}
+function processFile(file){
+  if(!file.name.toLowerCase().endsWith('.html')){sysMsg('err','非対応: '+file.name);return;}
+  sysMsg('info','読込: '+file.name);setProgress(20);pendingFile=file;
+
+  const prefixNum = parseInt((file.name.match(/^(\d+)[_\s\-]/) || [])[1]);
+
+  const r=new FileReader();
+  r.onload=e=>{setProgress(60);try{
+    const html=e.target.result,doc=new DOMParser().parseFromString(html,'text/html');
+    const title=doc.querySelector('.hero-title')?.textContent?.trim()||doc.querySelector('title')?.textContent?.trim()||file.name.replace(/\.html$/i,'');
+    const sysRaw=doc.querySelector('.header-title')?.textContent?.trim()||'';
+    let sys='その他';
+    if(/7th/i.test(sysRaw))sys='CoC 7th';else if(/6th|6版/i.test(sysRaw))sys='CoC 6th';else if(/coc|cthulhu/i.test(sysRaw))sys='CoC 7th';else if(/SW|sword/i.test(sysRaw))sys='SW2.5';else if(/DX|double/i.test(sysRaw))sys='DX3rd';
+    const indexCount=doc.querySelectorAll('.index-link').length;
+    const sess = !isNaN(prefixNum) ? prefixNum : Math.max(1, indexCount);
+
+    /* 発言者頻度を解析してサジェストタグを構築 */
+    const speakers = extractSpeakerFrequency(doc);
+    renderSpeakerSuggestions(speakers);
+    sysMsg('info', `発言者 ${speakers.length}名を検出`);
+
+    pendingHTML=html;
+    document.getElementById('imp-title').value=title;
+    document.getElementById('imp-sys').value=sys;
+    document.getElementById('imp-pl').value='';
+    document.getElementById('imp-sess').value=sess;
+    setProgress(100);
+    const sessSource = !isNaN(prefixNum) ? 'ファイル名より' : 'INDEXより';
+    sysMsg('ok',`解析完了: "${title}" (${sys} / セッション${sess} ${sessSource})`);
+    setTimeout(()=>setProgress(0),800);
+    openImportModal();
+  }catch(err){setProgress(0);sysMsg('err','解析エラー: '+err.message);}};
+  r.onerror=()=>{setProgress(0);sysMsg('err','読込失敗');};
+  r.readAsText(file,'UTF-8');
+}
+
+/* 上位10名をサジェストタグとして描画する */
+function renderSpeakerSuggestions(speakers) {
+  const area = document.getElementById('imp-pl-suggestions');
+  if (!area) return;
+
+  /* 全体の発言数の合計（割合計算用） */
+  const total = speakers.reduce((s, [, c]) => s + c, 0);
+
+  /* 上位10名、かつ1%以上の発言がある人だけ */
+  const top = speakers.filter(([, c]) => c / total >= 0.01).slice(0, 10);
+
+  if (!top.length) {
+    area.innerHTML = '<span style="color:#2a2a2a;font-size:.6rem;font-family:\'Montserrat\';">（候補なし）</span>';
+    return;
+  }
+
+  area.innerHTML = top.map(([name, cnt]) => {
+    const pct = Math.round(cnt / total * 100);
+    return `<button type="button" class="sp-tag" onclick="addSpeakerTag(this,'${escH(name)}')" title="${cnt}回 (${pct}%)">
+      ${escH(name)}
+      <span class="sp-tag-cnt">${pct}%</span>
+    </button>`;
+  }).join('');
+}
+
+/* タグをクリックしたら入力欄に追加（重複チェックあり） */
+function addSpeakerTag(btn, name) {
+  const input = document.getElementById('imp-pl');
+  const current = input.value.split(',').map(s => s.trim()).filter(Boolean);
+  if (current.includes(name)) {
+    /* 既に追加済み → 削除 */
+    input.value = current.filter(s => s !== name).join(', ');
+    btn.classList.remove('selected');
+  } else {
+    /* 追加 */
+    current.push(name);
+    input.value = current.join(', ');
+    btn.classList.add('selected');
+  }
+  input.dispatchEvent(new Event('input'));
+}
+
+/* 入力欄の変更を監視してタグの selected 状態を同期 */
+function syncSpeakerTags() {
+  const input = document.getElementById('imp-pl');
+  if (!input) return;
+  const current = input.value.split(',').map(s => s.trim()).filter(Boolean);
+  document.querySelectorAll('.sp-tag').forEach(btn => {
+    const name = btn.firstChild?.textContent?.trim() || '';
+    btn.classList.toggle('selected', current.includes(name));
+  });
+}
+function setProgress(p){document.getElementById('prog-bar').style.width=p+'%';}
+
+/* ── ドロップゾーン ──
+   モーダルが開いているときはドラッグイベントを無視する。
+   これにより入力欄内でのテキストドラッグが妨害されない。 */
+function isModalOpen(){
+  return [...document.querySelectorAll('.modal-ov')].some(m=>m.classList.contains('open'));
+}
+const dz=document.getElementById('dz');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{
+  if(isModalOpen())return;   /* モーダル中は無効 */
+  e.preventDefault();
+  dz.classList.add('over');
+}));
+['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,()=>dz.classList.remove('over')));
+dz.addEventListener('drop',e=>{
+  if(isModalOpen())return;   /* モーダル中は無効 */
+  e.preventDefault();
+  dz.classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(f)processFile(f);
+});
+
+/* body全体へのdragover/dropも抑止（ブラウザがファイルを開くのを防ぐ）
+   ただしモーダルの入力欄ドラッグは妨害しない                          */
+document.addEventListener('dragover', e=>{
+  /* 入力欄・テキストエリア上のドラッグは通す */
+  if(e.target.matches('input,textarea,[contenteditable]'))return;
+  if(!isModalOpen()) e.preventDefault();
+});
+document.addEventListener('drop', e=>{
+  if(e.target.matches('input,textarea,[contenteditable]'))return;
+  if(!isModalOpen()) e.preventDefault();
+});
+
+/* ══════════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════════ */
+function openModal(id){renderFolders();document.getElementById(id).classList.add('open');setTimeout(()=>document.getElementById(id).querySelector('input,select')?.focus(),50);}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='import-modal'){
+    pendingHTML=null; pendingFile=null;
+    /* サジェストタグをリセット */
+    const sg = document.getElementById('imp-pl-suggestions');
+    if(sg) sg.innerHTML='';
+    document.getElementById('imp-pl').value='';
+  }
+}
+function openImportModal(){renderFolders();openModal('import-modal');}
+function openFolderModal(){document.getElementById('fld-name').value='';openModal('folder-modal');}
+function openCloudModal(){openModal('cloud-modal');}
+
+document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)closeModal(ov.id);}));
+
+function openEditModal(e,id){
+  e.stopPropagation();
+  const log=S.logs.find(l=>l.id===id);if(!log)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-title').value=log.title;
+  document.getElementById('edit-sys').value=log.system;
+  document.getElementById('edit-pl').value=log.pl||'';
+  document.getElementById('edit-sess').value=log.sessions;
+  document.getElementById('edit-date').value=log.date;
+  renderFolders();
+  document.getElementById('edit-folder').value=log.folder||'';
+  openModal('edit-modal');
+}
+function confirmEdit(){
+  const id=document.getElementById('edit-id').value;
+  const log=S.logs.find(l=>l.id===id);if(!log)return;
+  log.title=document.getElementById('edit-title').value.trim()||log.title;
+  log.system=document.getElementById('edit-sys').value;
+  log.pl=document.getElementById('edit-pl').value;
+  log.folder=document.getElementById('edit-folder').value;
+  log.sessions=parseInt(document.getElementById('edit-sess').value)||1;
+  log.date=document.getElementById('edit-date').value||log.date;
+  saveMeta();closeModal('edit-modal');renderAll();
+  sysMsg('ok',`更新: "${log.title}"`);toast(`「${log.title}」を更新しました`);
+}
+/* ══════════════════════════════════════════════
+   HTML → JSON パーサー（動作確認済み）
+   4ファイル全対応・削減率 80〜91%
+══════════════════════════════════════════════ */
+function parseHTMLtoJSON(htmlStr, overrideMeta) {
+  const doc = new DOMParser().parseFromString(htmlStr, 'text/html');
+
+  /* ── メタ ── */
+  const title  = overrideMeta?.title  || doc.querySelector('.hero-title')?.textContent?.trim()   || '(無題)';
+  const brand  = doc.querySelector('.hero-brand')?.textContent?.trim()  || 'SESSION LOG';
+  const system = overrideMeta?.system || doc.querySelector('.header-title')?.textContent?.trim() || '';
+
+  /* ── INDEX ── */
+  const index = [...doc.querySelectorAll('a.index-link')].map(a => ({
+    id:    (a.getAttribute('href') || '').replace('#', ''),
+    label: a.textContent.trim(),
+  }));
+
+  /* ── tab-custom CSS を抽出（07アルカヌム等） ──
+     クラス名は Base64 エンコードされた文字列（例: aW5mbw = "info"）
+     ブロック丸ごと保存して再注入する                          */
+  const tabCustomClasses = new Set();
+  doc.querySelectorAll('.log-row').forEach(el =>
+    el.classList.forEach(c => { if (c.startsWith('tab-custom-')) tabCustomClasses.add(c); })
+  );
+  let customCSS = '';
+  if (tabCustomClasses.size > 0) {
+    doc.querySelectorAll('style').forEach(styleEl => {
+      const text = styleEl.textContent;
+      tabCustomClasses.forEach(cls => {
+        // `.tab-custom-XXX { ... }` と `.tab-custom-XXX .child { ... }` を全て抽出
+        const re = new RegExp(`\\.${cls}[^}]*\\{[^}]*\\}`, 'g');
+        const found = text.match(re);
+        if (found) customCSS += found.join('\n') + '\n';
+      });
+    });
+  }
+
+  /* ── 発言行パース ──
+     ブラウザの DOMParser で正確に DOM ツリーを構築してから
+     各 .log-row を走査する（Python正規表現では発生した
+     末尾 </div> 混入問題がここでは起きない）             */
+  const rows = [];
+  doc.querySelectorAll('.log-row').forEach(el => {
+    const rowId = el.id || '';
+
+    /* name-line を取得して color と display:none を確認 */
+    const nameLine   = el.querySelector('.name-line');
+    const nameHidden = nameLine?.style?.display === 'none';
+    const isSystem   = el.classList.contains('row-system') || nameHidden;
+
+    /* style 種別 */
+    let style = 'default';
+    if (el.classList.contains('style-info'))   style = 'info';
+    if (el.classList.contains('style-secret')) style = 'secret';
+    if (el.classList.contains('style-chat'))   style = 'chat';
+
+    /* tab-custom クラス（07専用） */
+    let tabCustom = '';
+    el.classList.forEach(c => { if (c.startsWith('tab-custom-')) tabCustom = c; });
+
+    /* row-content は innerHTML ごと保存（ruby / zwsp / img 等を保持） */
+    const content = el.querySelector('.row-content')?.innerHTML?.trim() || '';
+
+    if (isSystem) {
+      /* システム行: 発言者情報は不要 */
+      rows.push({ id: rowId, s: 1, content });
+      return;
+    }
+
+    /* 発言者名: .row-name から .name-line span を除いたテキスト */
+    let name = '';
+    const nameEl = el.querySelector('.row-name');
+    if (nameEl) {
+      const clone = nameEl.cloneNode(true);
+      clone.querySelectorAll('span').forEach(s => s.remove());
+      name = clone.textContent.trim();
+    }
+
+    const color = nameLine?.style?.background || '';
+    const tab   = el.querySelector('.row-tab')?.textContent?.trim() || 'main';
+
+    const row = { id: rowId, style, name, color, tab, content };
+    if (tabCustom) row.tabCustom = tabCustom;
+    rows.push(row);
+  });
+
+  const result = { v: 2, title, brand, system, index, rows };
+  if (customCSS) result.customCSS = customCSS;
+  return result;
+}
+
+/* ══════════════════════════════════════════════
+   JSON → ビューアHTML ジェネレーター
+   4ファイルの差異（tab-custom / ruby / system行）
+   を全て再現する
+══════════════════════════════════════════════ */
+function buildViewerHTML(data) {
+  const { title, brand, system, index, rows, customCSS } = data;
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* INDEX HTML */
+  const indexHTML = index.map((it, i) =>
+    `<a href="#${it.id}" class="index-link" onclick="closeMenu()">${String(i+1).padStart(2,'0')}￤${esc(it.label)}</a>`
+  ).join('');
+
+  /* フィルタボタン: ファイルに存在するスタイル種別だけ表示 */
+  const usedStyles = new Set(rows.filter(r => !r.s).map(r => r.style));
+  const filterBtns = [
+    ['default','MAIN'], ['info','INFO'], ['secret','SECRET'], ['chat','CHAT']
+  ].filter(([s]) => usedStyles.has(s))
+   .map(([s, label]) =>
+    `<button class="filter-btn active" onclick="toggleTab('style-${s}',this)">${label}</button>`
+   ).join('');
+
+  /* LOG ROWS HTML */
+  const rowsHTML = rows.map(r => {
+    /* システム行（s:1 フラグ） */
+    if (r.s) {
+      return `<div class="log-row style-default row-system"${r.id ? ` id="${r.id}"` : ''}>`
+           + `<div class="row-header"><div class="row-name"><span class="name-line" style="display:none"></span></div><div class="row-tab"></div></div>`
+           + `<hr class="info-separator"><div class="row-content">${r.content}</div></div>`;
+    }
+    /* 通常発言行 */
+    const classes = ['log-row', `style-${r.style}`, r.tabCustom].filter(Boolean).join(' ');
+    return `<div class="${classes}"${r.id ? ` id="${r.id}"` : ''}>`
+         + `<div class="row-header">`
+         + `<div class="row-name"><span class="name-line" style="background:${esc(r.color)}"></span>${esc(r.name)}</div>`
+         + `<div class="row-tab">${esc(r.tab)}</div>`
+         + `</div><hr class="info-separator">`
+         + `<div class="row-content">${r.content}</div></div>`;
+  }).join('\n');
+
+  /* tab-custom CSS（07のみ注入） */
+  const extraCSS = customCSS
+    ? `\n/* tab-custom styles */\n${customCSS}`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>${esc(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--outer-bg:#0f0f0f;--inner-bg:#050505;--block-bg:#111111;--text:#dbdee1;--accent:#78238C;--sub-line:#444;--border:#222;--tab-text:#666;--w:680px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;}
+body{background:var(--outer-bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;display:flex;flex-direction:column;align-items:center;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999;}
+header{position:fixed;top:0;left:0;width:100%;background:rgba(5,5,5,.98);backdrop-filter:blur(12px);z-index:1000;border-bottom:1px solid var(--border);display:flex;justify-content:center;}
+.header-inner{width:90%;max-width:var(--w);height:calc(60px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;padding-top:env(safe-area-inset-top);}
+.header-title{font-family:'Montserrat';font-weight:900;font-size:.85rem;color:#fff;letter-spacing:.2em;}
+.nav-uncheck{display:none;}
+.nav-open{width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--accent);border-radius:4px;z-index:1001;}
+.nav-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);opacity:0;visibility:hidden;transition:.3s;z-index:1500;}
+.nav-uncheck:checked~.nav-overlay{opacity:1;visibility:visible;}
+.nav-content{position:fixed;top:0;right:-320px;width:280px;height:100vh;height:100dvh;background:#0a0a0a;transition:.4s;z-index:2000;border-left:1px solid #222;overflow:hidden;visibility:hidden;padding-top:env(safe-area-inset-top);display:flex;flex-direction:column;overscroll-behavior:contain;}
+.nav-uncheck:checked~.nav-content{right:0;visibility:visible;}
+.nav-section{padding:28px 20px 10px;border-bottom:1px solid #222;flex-shrink:0;}
+.nav-section:last-child{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;border-bottom:none;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+.nav-label{font-family:'Montserrat';font-weight:900;font-size:.6rem;color:var(--accent);margin-bottom:14px;display:block;letter-spacing:.3em;}
+.filter-btn{appearance:none;-webkit-appearance:none;display:inline-block;padding:8px 14px;margin:3px;font-size:.7rem;font-weight:bold;background:#1a1a1a;border:1px solid transparent;border-radius:20px;color:#888;cursor:pointer;transition:all .2s;}
+.filter-btn.active{background:var(--accent);color:#fff;}
+.index-link{display:block;color:#ccc;text-decoration:none;padding:14px 20px;font-size:.8rem;border-bottom:1px solid #1a1a1a;transition:background .15s;}
+.index-link:hover{background:rgba(120,35,140,.08);}
+.container{width:100%;max-width:var(--w);background:var(--inner-bg);flex:1;display:flex;flex-direction:column;min-height:100vh;padding-top:calc(60px + env(safe-area-inset-top));}
+.container.hide-style-default .style-default{display:none!important;}
+.container.hide-style-info    .style-info{display:none!important;}
+.container.hide-style-secret  .style-secret{display:none!important;}
+.container.hide-style-chat    .style-chat{display:none!important;}
+.log-row{padding:12px 25px;border-bottom:1px dashed #1a1a1a;}
+.row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.row-name{font-weight:900;font-size:.85rem;color:#fff;display:flex;align-items:center;gap:8px;}
+.name-line{width:3px;height:1em;background:var(--sub-line);flex-shrink:0;}
+.row-tab{font-family:'Montserrat';font-weight:700;font-size:.55rem;color:var(--tab-text);}
+.row-content{font-size:.95rem;color:#ccc;white-space:pre-wrap;word-break:break-word;}
+ruby{ruby-align:center;}rt{font-size:.6em;color:#888;}
+.style-chat{margin-left:10%;border-left:1px solid #222;padding:10px 15px;opacity:.8;}
+.row-system{padding:2em 25px!important;font-style:italic;color:#aaa;}
+.info-separator{display:none;}
+[id^="log-"]{scroll-margin-top:calc(80px + env(safe-area-inset-top));}
+.hero-title-area{padding:40px 25px 25px;border-bottom:1px solid #111;}
+.hero-brand{font-family:'Montserrat';font-size:.6rem;font-weight:900;color:var(--accent);letter-spacing:.5em;display:block;margin-bottom:8px;}
+.hero-title{font-family:'Montserrat','Noto Sans JP';font-size:1.5rem;font-weight:900;color:#fff;border-left:3px solid var(--accent);padding-left:15px;}
+footer{text-align:center;padding:60px 32px calc(60px + env(safe-area-inset-bottom));font-family:'Montserrat';font-size:.6rem;opacity:.2;margin-top:auto;}${extraCSS}
+</style></head><body>
+<input id="nav-input" type="checkbox" class="nav-uncheck">
+<label for="nav-input" class="nav-overlay"></label>
+<header>
+  <div class="header-inner">
+    <div class="header-title">${esc(system)}</div>
+    <label for="nav-input" class="nav-open">
+      <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect y="0" width="18" height="2" rx="1" fill="white"/><rect y="6" width="18" height="2" rx="1" fill="white"/><rect y="12" width="18" height="2" rx="1" fill="white"/></svg>
+    </label>
+  </div>
+</header>
+<div class="nav-content">
+  <div class="nav-section">
+    <span class="nav-label">FILTER</span>
+    <div id="filter-container">${filterBtns}</div>
+  </div>
+  <div class="nav-section" style="border:none;">
+    <span class="nav-label">INDEX</span>
+    <div id="index-list">${indexHTML}</div>
+  </div>
+</div>
+<div class="container" id="container">
+  <div class="container-body">
+    <div class="hero-title-area">
+      <span class="hero-brand">${esc(brand)}</span>
+      <div class="hero-title">${esc(title)}</div>
+    </div>
+    ${rowsHTML}
+  </div>
+  <footer>SESSION LOG // ${esc(title)}</footer>
+</div>
+<script>
+function toggleTab(cls,btn){
+  btn.classList.toggle('active');
+  document.getElementById('container').classList.toggle('hide-'+cls,!btn.classList.contains('active'));
+}
+function closeMenu(){ document.getElementById('nav-input').checked=false; }
+<\/script>
+</body></html>`;
+}
+
+async function confirmImport(){
+  const title=document.getElementById('imp-title').value.trim();
+  if(!title){toast('タイトルを入力してください');return;}
+  if(!pendingHTML){toast('ファイルが選択されていません');return;}
+  sysMsg('info',`登録: "${title}"`);setProgress(20);
+  const id=`log_${Date.now()}`;
+  const meta={
+    title,
+    system: document.getElementById('imp-sys').value,
+    pl:     document.getElementById('imp-pl').value,
+    sessions: parseInt(document.getElementById('imp-sess').value)||1,
+    folder: document.getElementById('imp-folder').value,
+    date:   new Date().toISOString().split('T')[0],
+    filename: pendingFile?.name||'(manual)',
+  };
+  try{
+    /* HTMLのサイズを記録 */
+    const origBytes = new TextEncoder().encode(pendingHTML).length;
+    sysMsg('info',`元ファイル: ${kb(origBytes)}`);
+
+    /* Step1: HTML → JSON パース */
+    setProgress(35);
+    sysMsg('info','HTML → JSON 変換中…');
+    const jsonData = parseHTMLtoJSON(pendingHTML, { title, system: meta.system });
+    const jsonStr  = JSON.stringify(jsonData);
+    const jsonBytes = new TextEncoder().encode(jsonStr).length;
+    const rowCount  = jsonData.rows?.length ?? 0;
+    sysMsg('ok',`JSON変換完了: ${kb(origBytes)} → ${kb(jsonBytes)} (${Math.round((1-jsonBytes/origBytes)*100)}%減 / ${rowCount}行)`);
+
+    /* Step2: gzip圧縮 */
+    setProgress(60);
+    sysMsg('info','gzip圧縮中…');
+    const comp = await compress(jsonStr);
+    /* comp.compressed=false のとき comp.size は undefined — jsonBytes で補完 */
+    const finalBytes = comp.compressed ? comp.size : jsonBytes;
+    const totalReduction = Math.round((1 - finalBytes / origBytes) * 100);
+    sysMsg('ok',`gzip後: ${kb(finalBytes)} (元比 ${totalReduction}%減)`);
+
+    /* Step3: IndexedDB保存 (format フラグを付与) */
+    setProgress(80);
+    await dbPut(id, { ...comp, format: 'json_v1' });
+
+    /* 統計更新 */
+    totalOrig  += origBytes;
+    totalSaved += finalBytes;
+
+    const log = { id, ...meta };
+    S.logs.unshift(log);
+    saveMeta();
+    setProgress(100);
+    sysMsg('ok',`登録完了: "${title}" [${id}]`);
+    closeModal('import-modal');
+    renderAll();
+    toast(`「${title}」を登録しました`);
+    setTimeout(()=>setProgress(0), 800);
+  }catch(err){
+    setProgress(0);
+    sysMsg('err','保存失敗: '+err.message);
+    toast('保存エラー: '+err.message);
+  }
+}
+function confirmFolder(){
+  const name=document.getElementById('fld-name').value.trim();
+  if(!name){toast('フォルダ名を入力してください');return;}
+  S.folders.push({id:'fld_'+Date.now(),name});
+  saveMeta();closeModal('folder-modal');renderAll();
+  sysMsg('ok',`フォルダ作成: "${name}"`);toast(`フォルダ「${name}」を作成しました`);
+}
+async function deleteFolder(e,id){
+  e.stopPropagation();
+  const f=S.folders.find(x=>x.id===id);if(!f)return;
+  const cnt=S.logs.filter(l=>l.folder===id).length;
+  if(!confirm(`「${f.name}」を削除しますか？${cnt?`\n中の${cnt}件のログは未分類になります。`:''}`))return;
+  S.folders=S.folders.filter(x=>x.id!==id);
+  S.logs.forEach(l=>{if(l.folder===id)l.folder='';});
+  saveMeta();renderAll();sysMsg('ok',`フォルダ削除: "${f.name}"`);toast(`「${f.name}」を削除しました`);
+}
+async function deleteLog(e,id){
+  e.stopPropagation();
+  const log=S.logs.find(l=>l.id===id);if(!log)return;
+  if(!confirm(`「${log.title}」を削除しますか？`))return;
+  try{await dbDel(id);S.logs=S.logs.filter(l=>l.id!==id);saveMeta();renderAll();sysMsg('ok',`削除: "${log.title}"`);toast(`「${log.title}」を削除しました`);}catch(err){sysMsg('err','削除失敗: '+err.message);}
+}
+
+/* ══════════════════════════════════════════════
+   LOG VIEWER
+══════════════════════════════════════════════ */
+async function openLog(id){
+  const log=S.logs.find(l=>l.id===id);
+  if(!log){sysMsg('err','ログ未発見: '+id);return;}
+  sysMsg('info',`ログ表示: "${log.title}"`);
+  await doScan('in');
+  try{
+    const stored=await dbGet(id);
+    if(!stored){
+      sysMsg('err','データなし — 再インポートしてください');
+      await doScan('out');
+      toast('ログデータが見つかりません。再インポートしてください。');
+      return;
+    }
+
+    /* decompress → 文字列を取得 */
+    const raw = await decompress(stored);
+
+    /* format判定: json_v1（新形式）か生HTML（旧形式）か */
+    let viewerHTML;
+    if(stored.format === 'json_v1'){
+      /* 新形式: JSON → ビューアHTML を生成 */
+      sysMsg('info','JSONからビューアを構築中…');
+      const jsonData = JSON.parse(raw);
+      viewerHTML = buildViewerHTML(jsonData);
+      sysMsg('ok',`ビューア構築完了 (${jsonData.rows?.length ?? 0}行)`);
+    } else {
+      /* 旧形式: 生HTMLをそのまま表示（後方互換） */
+      sysMsg('info','レガシーHTML形式で表示');
+      viewerHTML = raw;
+    }
+
+    const blob=new Blob([viewerHTML],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const iframe=document.getElementById('log-iframe');
+    iframe.onload=async()=>{
+      URL.revokeObjectURL(url);
+      sysMsg('ok',`表示完了: "${log.title}"`);
+      await doScan('out');
+    };
+    iframe.src=url;
+
+    document.getElementById('log-view').classList.add('open');
+    document.getElementById('back-btn').classList.add('vis');
+    document.getElementById('sys-tabs').style.opacity='.3';
+    document.getElementById('sys-tabs').style.pointerEvents='none';
+    history.pushState({logId:id},'',`#/log/${id}`);
+
+  }catch(err){
+    sysMsg('err','表示失敗: '+err.message);
+    await doScan('out');
+  }
+}
+async function navigateToList(){
+  sysMsg('info','一覧に戻ります');await doScan('in');
+  document.getElementById('log-view').classList.remove('open');
+  document.getElementById('log-iframe').src='about:blank';
+  document.getElementById('back-btn').classList.remove('vis');
+  document.getElementById('sys-tabs').style.opacity='';
+  document.getElementById('sys-tabs').style.pointerEvents='';
+  history.pushState({},'','#/');await doScan('out');sysMsg('sys','一覧に復帰');
+}
+function doScan(dir){
+  return new Promise(res=>{
+    const el=document.getElementById('scan');
+    el.style.transition='none';
+    if(dir==='in'){el.style.clipPath='inset(0 0 100% 0)';el.offsetHeight;el.style.transition='clip-path .36s cubic-bezier(.4,0,.2,1)';el.style.clipPath='inset(0 0 0% 0)';setTimeout(res,380);}
+    else{el.style.clipPath='inset(0 0 0% 0)';el.offsetHeight;el.style.transition='clip-path .28s ease';el.style.clipPath='inset(100% 0 0% 0)';setTimeout(res,300);}
+  });
+}
+window.addEventListener('popstate',async e=>{
+  if(location.hash.startsWith('#/log/'))await openLog(location.hash.replace('#/log/',''));
+  else if(document.getElementById('log-view').classList.contains('open'))await navigateToList();
+});
+
+/* ══════════════════════════════════════════════
+   SHARE — LOCAL EXPORT / IMPORT
+══════════════════════════════════════════════ */
+function toggleShareMenu(){document.getElementById('share-menu').classList.toggle('open');}
+document.addEventListener('click',e=>{if(!document.getElementById('share-wrap').contains(e.target))document.getElementById('share-menu').classList.remove('open');});
+
+function showExportOverlay(lbl){document.getElementById('exp-lbl').textContent=lbl;document.getElementById('exp-bar').style.width='0%';document.getElementById('exp-sub').textContent='準備中…';document.getElementById('export-overlay').classList.add('open');}
+function updExport(pct,sub){document.getElementById('exp-bar').style.width=pct+'%';document.getElementById('exp-sub').textContent=sub;}
+function hideExportOverlay(){document.getElementById('export-overlay').classList.remove('open');}
+
+async function exportAll(){document.getElementById('share-menu').classList.remove('open');await exportLogs(S.logs,'trpg-archive-all');}
+async function exportFolder(){
+  document.getElementById('share-menu').classList.remove('open');
+  const logs=S.folderFilter==='ALL'?S.logs:S.logs.filter(l=>l.folder===S.folderFilter);
+  const nm=S.folderFilter==='ALL'?'all':(S.folders.find(f=>f.id===S.folderFilter)?.name||'export');
+  await exportLogs(logs,'trpg-archive-'+nm.replace(/[^\w\u3040-\u9fff]/g,'-'));
+}
+async function exportLogs(logs,filename){
+  if(!logs.length){toast('エクスポートするログがありません');return;}
+  showExportOverlay('EXPORTING…');
+  try{
+    const blobs=[];
+    for(let i=0;i<logs.length;i++){
+      updExport(Math.round((i/logs.length)*80),`${i+1}/${logs.length}: ${logs[i].title}`);
+      const data=await dbGet(logs[i].id);
+      if(data)blobs.push({id:logs[i].id,...data});
+    }
+    updExport(90,'JSON生成中…');
+    const bundle={version:3,exportedAt:new Date().toISOString(),meta:{folders:S.folders,logs},blobs};
+    const json=JSON.stringify(bundle);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename+'.trpgarchive.json';a.click();URL.revokeObjectURL(url);
+    updExport(100,'完了');
+    sysMsg('ok',`エクスポート完了: ${logs.length}件 (${kb(json.length)})`);
+    setTimeout(hideExportOverlay,800);toast(`${logs.length}件をエクスポートしました`);
+  }catch(err){hideExportOverlay();sysMsg('err','エクスポート失敗: '+err.message);toast('エクスポートに失敗しました');}
+}
+function triggerImportBundle(){document.getElementById('share-menu').classList.remove('open');document.getElementById('import-bundle-input').click();}
+async function importBundle(file){
+  if(!file)return;
+  showExportOverlay('IMPORTING…');
+  try{
+    const bundle=JSON.parse(await file.text());
+    if(!bundle.meta||!bundle.blobs)throw new Error('無効なバンドル形式');
+    updExport(20,'メタデータ統合中…');
+    bundle.meta.folders.forEach(f=>{if(!S.folders.find(x=>x.id===f.id))S.folders.push(f);});
+    let added=0;
+    for(let i=0;i<bundle.blobs.length;i++){
+      const b=bundle.blobs[i];
+      const lm=bundle.meta.logs.find(l=>l.id===b.id);
+      if(!lm)continue;
+      updExport(20+Math.round((i/bundle.blobs.length)*70),`${i+1}/${bundle.blobs.length}: ${lm.title}`);
+      if(!S.logs.find(l=>l.id===lm.id)){S.logs.push(lm);await dbPut(b.id,{data:b.data,compressed:b.compressed});added++;}
+    }
+    saveMeta();updExport(100,'完了');sysMsg('ok',`インポート完了: ${added}件追加`);renderAll();setTimeout(hideExportOverlay,800);toast(`${added}件をインポートしました`);
+  }catch(err){hideExportOverlay();sysMsg('err','インポート失敗: '+err.message);toast('インポートに失敗しました');}
+  document.getElementById('import-bundle-input').value='';
+}
+
+/* ══════════════════════════════════════════════
+   FIREBASE CLOUD SHARING
+   — Firestore REST API（SDKなし）
+══════════════════════════════════════════════ */
+function fbConfig(){return{apiKey:document.getElementById('fb-api-key').value.trim(),projectId:document.getElementById('fb-project-id').value.trim(),authDomain:document.getElementById('fb-auth-domain').value.trim()};}
+function fbUrl(path){const{projectId}=fbConfig();return`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`;}
+async function firestoreGet(path){const cfg=fbConfig();const url=`${fbUrl(path)}?key=${cfg.apiKey}`;const r=await fetch(url);if(!r.ok)throw new Error(`Firestore GET failed: ${r.status}`);return r.json();}
+async function firestoreSet(path,fields){const cfg=fbConfig();const url=`${fbUrl(path)}?key=${cfg.apiKey}`;const r=await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});if(!r.ok)throw new Error(`Firestore SET failed: ${r.status}`);return r.json();}
+
+function setCloudStatus(state,text){
+  document.getElementById('cloud-dot').className='cloud-dot'+({ok:' ok',err:' err',connecting:' connecting'}[state]||'');
+  document.getElementById('cloud-status-text').textContent=text;
+}
+
+async function testFirebaseConnection(){
+  const{apiKey,projectId}=fbConfig();
+  if(!apiKey||!projectId){toast('APIキーとプロジェクトIDを入力してください');return;}
+  setCloudStatus('connecting','接続テスト中…');
+  sysMsg('cloud','Firestore接続テスト開始');
+  document.getElementById('fb-test-btn').disabled=true;
+  try{
+    await firestoreSet('_ping/test',{ts:{stringValue:new Date().toISOString()}});
+    setCloudStatus('ok','接続成功 — Firestoreが利用可能です');
+    sysMsg('ok','Firebase接続テスト成功');
+    fbConnected=true;
+    document.getElementById('fb-upload-btn').disabled=false;
+    document.getElementById('fb-upload-btn').style.opacity='1';
+    saveMeta();
+    toast('Firebase接続成功');
+  }catch(err){
+    setCloudStatus('err','接続失敗: '+err.message);
+    sysMsg('err','Firebase接続失敗: '+err.message);
+    fbConnected=false;
+    toast('接続に失敗しました — APIキーとプロジェクトIDを確認してください');
+  }
+  document.getElementById('fb-test-btn').disabled=false;
+}
+
+async function cloudUploadAll(){
+  if(!fbConnected){toast('先に接続テストを実行してください');return;}
+  showExportOverlay('UPLOADING TO CLOUD…');
+  try{
+    // Upload meta
+    updExport(10,'メタデータをアップロード中…');
+    await firestoreSet('archive/meta',{folders:{stringValue:JSON.stringify(S.folders)},logs:{stringValue:JSON.stringify(S.logs)},updatedAt:{stringValue:new Date().toISOString()}});
+    // Upload blobs
+    for(let i=0;i<S.logs.length;i++){
+      updExport(10+Math.round((i/S.logs.length)*80),`${i+1}/${S.logs.length}: ${S.logs[i].title}`);
+      const data=await dbGet(S.logs[i].id);
+      if(data){
+        await firestoreSet(`archive/blobs/items/${S.logs[i].id}`,{data:{stringValue:JSON.stringify(data)},logId:{stringValue:S.logs[i].id}});
+      }
+    }
+    updExport(95,'共有リンク生成中…');
+    const{projectId}=fbConfig();
+    const shareUrl=`${location.origin}${location.pathname}?view=${projectId}`;
+    document.getElementById('share-link-display').textContent=shareUrl;
+    document.getElementById('cloud-share-section').style.display='block';
+    document.getElementById('cloud-menu-label').textContent='クラウド設定 (接続済)';
+    updExport(100,'完了');
+    sysMsg('cloud',`クラウドアップロード完了: ${S.logs.length}件`);
+    setTimeout(hideExportOverlay,800);
+    toast(`${S.logs.length}件をクラウドに保存しました`);
+  }catch(err){
+    hideExportOverlay();
+    sysMsg('err','クラウドアップロード失敗: '+err.message);
+    toast('アップロードに失敗しました');
+  }
+}
+
+function copyShareLink(){
+  const link=document.getElementById('share-link-display').textContent;
+  if(link==='—')return;
+  navigator.clipboard.writeText(link).then(()=>toast('リンクをコピーしました')).catch(()=>toast('コピー失敗 — 手動でコピーしてください'));
+}
+
+/* 閲覧専用モード (URLに?view=projectId がある場合) */
+async function checkViewMode(){
+  const params=new URLSearchParams(location.search);
+  const projectId=params.get('view');
+  if(!projectId)return false;
+  sysMsg('cloud',`閲覧専用モード: プロジェクト ${projectId}`);
+  document.getElementById('fb-project-id').value=projectId;
+  try{
+    const apiKey=fbConfig().apiKey||'';
+    if(!apiKey){sysMsg('warn','閲覧モード: APIキーが未設定です（公開設定のFirestoreのみ動作）');}
+    // Firestoreの公開読み取り（APIキーなしでも読める場合）
+    const url=`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/archive/meta`;
+    const r=await fetch(url);if(!r.ok)throw new Error(`${r.status}`);
+    const doc=await r.json();
+    const folders=JSON.parse(doc.fields?.folders?.stringValue||'[]');
+    const logs=JSON.parse(doc.fields?.logs?.stringValue||'[]');
+    S.folders=folders;S.logs=logs;
+    renderAll();
+    sysMsg('ok',`クラウドから読込完了: ${logs.length}件`);
+    return true;
+  }catch(err){sysMsg('err','クラウド読込失敗: '+err.message);return false;}
+}
+
+/* ══════════════════════════════════════════════
+   MOBILE
+══════════════════════════════════════════════ */
+function toggleSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('sb-overlay');const open=sb.classList.toggle('mobile-open');ov.style.display=open?'block':'none';}
+function closeSidebar(){if(window.innerWidth<=680){document.getElementById('sidebar').classList.remove('mobile-open');document.getElementById('sb-overlay').style.display='none';}}
+function mobileNav(tab){document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('bnav-'+tab)?.classList.add('active');}
+
+/* ══════════════════════════════════════════════
+   TOAST / UTILS
+══════════════════════════════════════════════ */
+let _tt;
+function toast(msg){document.getElementById('toast-t').textContent=msg;const el=document.getElementById('toast');el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3400);}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pad(n){return String(n).padStart(2,'0');}
+function kb(b){return Math.round(b/1024)+'KB';}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(document.getElementById('log-view').classList.contains('open')){navigateToList();return;}document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));closeSidebar();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('srch').focus();}
+});
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+async function init(){
+  sysMsg('sys','TRPG ARCHIVE PORTAL — 起動中…');
+  try{await initDB();sysMsg('ok','IndexedDB 初期化完了');}catch(e){sysMsg('err','IDB失敗: '+e.message);}
+  sysMsg('sys',CAN_COMPRESS?'gzip圧縮: 有効':'gzip圧縮: 非対応');
+  loadMeta();
+  const isViewer=await checkViewMode();
+  if(!isViewer)renderAll();
+  sysMsg('sys',`起動完了 — ${S.logs.length}件 / ${S.folders.length}フォルダ`);
+  if(location.hash.startsWith('#/log/'))setTimeout(()=>openLog(location.hash.replace('#/log/','')),150);
+  sysMsg('ok','待機状態');
+}
+init();
+</script>
+</body>
+</html>
