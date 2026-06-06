@@ -397,7 +397,37 @@ body::after {
 }
 .color-custom-label { font-family:'Montserrat'; font-size:.52rem; color:#3a3a3a; }
 
-#folder-modal .modal-h::before { background:#2a7a44; }
+/* ── アクセントカラー設定 ── */
+#accent-modal .modal { border-top-color: #3a3a5a; }
+#accent-modal .modal-h::before { background: var(--accent); }
+.accent-preview-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin-bottom: 16px;
+  border-radius: 1px;
+  transition: background .3s;
+}
+.accent-live-preview {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 13px; border: 1px solid #1c1c1c; border-radius: 2px;
+  margin-bottom: 12px; background: #030303;
+}
+.accent-preview-gem {
+  width: 8px; height: 8px;
+  clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  flex-shrink: 0;
+}
+.accent-preview-tag {
+  font-family: 'Montserrat'; font-size: .52rem; padding: 2px 8px;
+  border-radius: 10px; letter-spacing: .1em;
+}
+.accent-preview-btn-sample {
+  font-family: 'Montserrat'; font-weight: 700; font-size: .55rem;
+  padding: 5px 11px; border: none; border-radius: 2px;
+  color: #fff; letter-spacing: .1em; cursor: default;
+}
+
+
 /* edit modal — blue accent */
 #edit-modal .modal { border-top-color:#1a3a5a; }
 #edit-modal .modal-h::before { background:#2a5a8a; }
@@ -557,6 +587,9 @@ body::after {
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="1" x2="5" y2="9" stroke="white" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="5" x2="9" y2="5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
       IMPORT
     </button>
+    <button class="btn-g" onclick="openAccentModal()" title="アクセントカラー変更" aria-label="アクセントカラー設定" style="padding:6px 9px;">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="6" r="1.5" fill="currentColor"/></svg>
+    </button>
   </div>
 </header>
 
@@ -637,7 +670,7 @@ body::after {
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="1.2"/><line x1="14" y1="9" x2="14" y2="19" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9" y1="14" x2="19" y2="14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
       </div>
       <span class="dz-t">DROP LOG FILE</span>
-      <div class="dz-s">ococforea .html</div>
+      <div class="dz-s">00_title.html</div>
     </div>
     <div id="prog-wrap"><div id="prog-bar"></div></div>
     <div id="comp-badge"><span>STORAGE</span><span id="comp-info">—</span></div>
@@ -819,6 +852,35 @@ body::after {
   <div class="exp-lbl" id="exp-lbl">PROCESSING…</div>
   <div class="exp-bar-wrap"><div id="exp-bar"></div></div>
   <div class="exp-sub" id="exp-sub">準備中</div>
+</div>
+
+<!-- ════ ACCENT COLOR MODAL ════ -->
+<div class="modal-ov" id="accent-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('accent-modal')">✕</button>
+    <div class="modal-h">ACCENT COLOR</div>
+    <div class="accent-preview-bar" id="accent-preview-bar"></div>
+    <div class="accent-live-preview">
+      <div class="accent-preview-gem" id="accent-preview-gem"></div>
+      <span class="accent-preview-tag" id="accent-preview-tag">SYSTEM TAG</span>
+      <span class="accent-preview-btn-sample" id="accent-preview-btn">IMPORT</span>
+    </div>
+    <div class="mf">
+      <label>プリセット</label>
+      <div class="color-picker-row" id="accent-swatch-row"></div>
+    </div>
+    <div class="mf">
+      <label>カスタムカラー</label>
+      <div class="color-custom-wrap">
+        <input type="color" id="accent-color-custom" oninput="onAccentCustomColor(this.value)">
+        <span class="color-custom-label" id="accent-color-hex">#78238C</span>
+      </div>
+    </div>
+    <div class="modal-act">
+      <button class="btn-g" onclick="closeModal('accent-modal')">CANCEL</button>
+      <button class="btn-p" onclick="applyAccentColor()">APPLY</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1405,8 +1467,19 @@ function parseHTMLtoJSON(htmlStr, overrideMeta) {
    4ファイルの差異（tab-custom / ruby / system行）
    を全て再現する
 ══════════════════════════════════════════════ */
-function buildViewerHTML(data) {
+function buildViewerHTML(data, folderColor) {
   const { title, brand, system, index, rows, customCSS } = data;
+
+  /* フォルダカラーが指定されていれば派生色も計算 */
+  function hexToRgbaLocal(hex, alpha) {
+    if (!hex || !hex.startsWith('#')) return `rgba(120,35,140,${alpha})`;
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+  const accentColor = folderColor || '#78238C';
+  const accentGlow  = hexToRgbaLocal(accentColor, 0.35);
 
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1459,7 +1532,7 @@ function buildViewerHTML(data) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--outer-bg:#0f0f0f;--inner-bg:#050505;--block-bg:#111111;--text:#dbdee1;--accent:#78238C;--sub-line:#444;--border:#222;--tab-text:#666;--w:680px;}
+:root{--outer-bg:#0f0f0f;--inner-bg:#050505;--block-bg:#111111;--text:#dbdee1;--accent:${accentColor};--accent-glow:${accentGlow};--sub-line:#444;--border:#222;--tab-text:#666;--w:680px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{min-height:100vh;}
 body{background:var(--outer-bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;display:flex;flex-direction:column;align-items:center;}
@@ -1652,7 +1725,10 @@ async function openLog(id){
       /* 新形式: JSON → ビューアHTML を生成 */
       sysMsg('info','JSONからビューアを構築中…');
       const jsonData = JSON.parse(raw);
-      viewerHTML = buildViewerHTML(jsonData);
+      /* フォルダカラーを取得してビューアに渡す */
+      const folder = S.folders.find(f => f.id === log.folder);
+      const folderColor = folder?.color || null;
+      viewerHTML = buildViewerHTML(jsonData, folderColor);
       sysMsg('ok',`ビューア構築完了 (${jsonData.rows?.length ?? 0}行)`);
     } else {
       /* 旧形式: 生HTMLをそのまま表示（後方互換） */
@@ -1892,10 +1968,88 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ══════════════════════════════════════════════
+   ACCENT COLOR — ツール全体のアクセントカラー設定
+══════════════════════════════════════════════ */
+const ACCENT_PRESETS = [
+  '#78238C','#9B2FBE','#C03080','#1E6FBF','#1A9B6E',
+  '#B85C1A','#6B4AC2','#B82A2A','#2A7A5A','#7A6A1A',
+];
+const ACCENT_STORAGE_KEY = 'trpg-archive-accent';
+let _accentPicked = '#78238C';
+
+function loadAccentColor(){
+  const saved = localStorage.getItem(ACCENT_STORAGE_KEY);
+  if(saved) applyAccentColorToDOM(saved, false);
+}
+
+function applyAccentColorToDOM(color, save=true){
+  const root = document.documentElement;
+  const r=parseInt(color.slice(1,3),16), g=parseInt(color.slice(3,5),16), b=parseInt(color.slice(5,7),16);
+  root.style.setProperty('--accent', color);
+  root.style.setProperty('--accent-dim', `rgba(${r},${g},${b},0.13)`);
+  root.style.setProperty('--accent-glow', `rgba(${r},${g},${b},0.35)`);
+  root.style.setProperty('--accent-hi', shiftLightness(color, 1.35));
+  if(save) localStorage.setItem(ACCENT_STORAGE_KEY, color);
+}
+
+function shiftLightness(hex, factor){
+  let r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  r=Math.min(255,Math.round(r*factor)); g=Math.min(255,Math.round(g*factor)); b=Math.min(255,Math.round(b*factor));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function openAccentModal(){
+  _accentPicked = localStorage.getItem(ACCENT_STORAGE_KEY) || '#78238C';
+  // スウォッチ描画
+  const row = document.getElementById('accent-swatch-row');
+  row.innerHTML = ACCENT_PRESETS.map(c =>
+    `<div class="color-swatch${c===_accentPicked?' picked':''}"
+         style="background:${c}" onclick="pickAccentColor('${c}',this)" title="${c}"></div>`
+  ).join('');
+  document.getElementById('accent-color-custom').value = _accentPicked;
+  document.getElementById('accent-color-hex').textContent = _accentPicked;
+  updateAccentPreview(_accentPicked);
+  document.getElementById('accent-modal').classList.add('open');
+}
+
+function pickAccentColor(color, el){
+  _accentPicked = color;
+  document.querySelectorAll('#accent-swatch-row .color-swatch').forEach(s=>s.classList.remove('picked'));
+  if(el) el.classList.add('picked');
+  document.getElementById('accent-color-custom').value = color;
+  document.getElementById('accent-color-hex').textContent = color;
+  updateAccentPreview(color);
+}
+
+function onAccentCustomColor(val){
+  _accentPicked = val;
+  document.getElementById('accent-color-hex').textContent = val;
+  document.querySelectorAll('#accent-swatch-row .color-swatch').forEach(s=>s.classList.remove('picked'));
+  updateAccentPreview(val);
+}
+
+function updateAccentPreview(color){
+  document.getElementById('accent-preview-bar').style.background = `linear-gradient(90deg,${color},transparent)`;
+  document.getElementById('accent-preview-gem').style.background = color;
+  document.getElementById('accent-preview-tag').style.color = color;
+  document.getElementById('accent-preview-tag').style.border = `1px solid ${color}40`;
+  document.getElementById('accent-preview-tag').style.background = hexToRgba(color, 0.13);
+  document.getElementById('accent-preview-btn').style.background = color;
+}
+
+function applyAccentColor(){
+  applyAccentColorToDOM(_accentPicked, true);
+  closeModal('accent-modal');
+  toast('アクセントカラーを変更しました');
+  sysMsg('ok',`アクセントカラー変更: ${_accentPicked}`);
+}
+
+/* ══════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════ */
 async function init(){
   sysMsg('sys','TRPG ARCHIVE PORTAL — 起動中…');
+  loadAccentColor();
   try{await initDB();sysMsg('ok','IndexedDB 初期化完了');}catch(e){sysMsg('err','IDB失敗: '+e.message);}
   sysMsg('sys',CAN_COMPRESS?'gzip圧縮: 有効':'gzip圧縮: 非対応');
   loadMeta();
