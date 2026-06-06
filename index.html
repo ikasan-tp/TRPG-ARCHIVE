@@ -664,13 +664,13 @@ body::after {
     <div class="sb-head" style="padding:11px 13px 7px;border-bottom:1px solid var(--border);">
       <span class="nav-lbl">IMPORT</span>
     </div>
-    <div class="dz" id="dz" role="button" tabindex="0" aria-label="ファイルをドロップ">
-      <input type="file" id="file-input" accept=".html" multiple onchange="handleFiles(this.files)">
+    <div class="dz" id="dz" role="button" tabindex="0" aria-label="ファイルをドロップまたはクリック" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".html" style="display:none" onchange="handleFiles(this.files)">
       <div class="dz-ico">
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="1.2"/><line x1="14" y1="9" x2="14" y2="19" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9" y1="14" x2="19" y2="14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
       </div>
       <span class="dz-t">DROP LOG FILE</span>
-      <div class="dz-s">00_title.html</div>
+      <div class="dz-s">or click to browse .html</div>
     </div>
     <div id="prog-wrap"><div id="prog-bar"></div></div>
     <div id="comp-badge"><span>STORAGE</span><span id="comp-info">—</span></div>
@@ -1184,12 +1184,13 @@ function extractSpeakerFrequency(doc) {
   const freq = new Map();
   doc.querySelectorAll('.log-row:not(.row-system)').forEach(el => {
     const nameLine = el.querySelector('.name-line');
-    if (nameLine?.style?.display === 'none') return; /* system行 */
     const nameEl = el.querySelector('.row-name');
     if (!nameEl) return;
     const clone = nameEl.cloneNode(true);
     clone.querySelectorAll('span').forEach(s => s.remove());
     const name = clone.textContent.trim();
+    /* name-line が display:none でも名前テキストがあればotherタブ形式として扱う */
+    if (nameLine?.style?.display === 'none' && !name) return;
     if (!name || SPEAKER_EXCLUDE.test(name)) return;
     freq.set(name, (freq.get(name) || 0) + 1);
   });
@@ -1419,7 +1420,14 @@ function parseHTMLtoJSON(htmlStr, overrideMeta) {
     /* name-line を取得して color と display:none を確認 */
     const nameLine   = el.querySelector('.name-line');
     const nameHidden = nameLine?.style?.display === 'none';
-    const isSystem   = el.classList.contains('row-system') || nameHidden;
+    /* .row-name に直接テキストがある場合（otherタブ等）はシステム行ではない */
+    const nameEl0    = el.querySelector('.row-name');
+    const hasNameText = nameEl0 ? (() => {
+      const c = nameEl0.cloneNode(true);
+      c.querySelectorAll('span').forEach(s => s.remove());
+      return c.textContent.trim().length > 0;
+    })() : false;
+    const isSystem   = el.classList.contains('row-system') || (nameHidden && !hasNameText);
 
     /* style 種別 */
     let style = 'default';
@@ -1449,10 +1457,16 @@ function parseHTMLtoJSON(htmlStr, overrideMeta) {
       name = clone.textContent.trim();
     }
 
-    const color = nameLine?.style?.background || '';
+    /* カラー: name-line の background が優先、なければ .row-name の color（otherタブ形式） */
+    const nameLineColor = nameLine?.style?.background || '';
+    const rowNameColor  = nameEl?.style?.color || '';
+    const color = nameLineColor || rowNameColor;
+    /* otherタブ形式（name-line が display:none で .row-name に color がある）を記録 */
+    const nameColorMode = !nameLineColor && !!rowNameColor ? 'row' : 'line';
     const tab   = el.querySelector('.row-tab')?.textContent?.trim() || 'main';
 
     const row = { id: rowId, style, name, color, tab, content };
+    if (nameColorMode === 'row') row.ncm = 'row'; /* other形式フラグ */
     if (tabCustom) row.tabCustom = tabCustom;
     rows.push(row);
   });
@@ -1511,9 +1525,13 @@ function buildViewerHTML(data, folderColor) {
     }
     /* 通常発言行 */
     const classes = ['log-row', `style-${r.style}`, r.tabCustom].filter(Boolean).join(' ');
+    /* otherタブ形式（ncm:'row'）は .row-name に color、name-line は display:none */
+    const nameHTML = r.ncm === 'row'
+      ? `<div class="row-name" style="color:${esc(r.color)}"><span class="name-line" style="display:none"></span>${esc(r.name)}</div>`
+      : `<div class="row-name"><span class="name-line" style="background:${esc(r.color)}"></span>${esc(r.name)}</div>`;
     return `<div class="${classes}"${r.id ? ` id="${r.id}"` : ''}>`
          + `<div class="row-header">`
-         + `<div class="row-name"><span class="name-line" style="background:${esc(r.color)}"></span>${esc(r.name)}</div>`
+         + nameHTML
          + `<div class="row-tab">${esc(r.tab)}</div>`
          + `</div><hr class="info-separator">`
          + `<div class="row-content">${r.content}</div></div>`;
@@ -1534,8 +1552,8 @@ function buildViewerHTML(data, folderColor) {
 <style>
 :root{--outer-bg:#0f0f0f;--inner-bg:#050505;--block-bg:#111111;--text:#dbdee1;--accent:${accentColor};--accent-glow:${accentGlow};--sub-line:#444;--border:#222;--tab-text:#666;--w:680px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{min-height:100vh;}
-body{background:var(--outer-bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;display:flex;flex-direction:column;align-items:center;}
+html{height:100%;overflow-y:scroll;}
+body{min-height:100%;background:var(--outer-bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;display:flex;flex-direction:column;align-items:center;}
 body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999;}
 header{position:fixed;top:0;left:0;width:100%;background:rgba(5,5,5,.98);backdrop-filter:blur(12px);z-index:1000;border-bottom:1px solid var(--border);display:flex;justify-content:center;}
 .header-inner{width:90%;max-width:var(--w);height:calc(60px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;padding-top:env(safe-area-inset-top);}
@@ -1610,6 +1628,17 @@ function toggleTab(cls,btn){
   document.getElementById('container').classList.toggle('hide-'+cls,!btn.classList.contains('active'));
 }
 function closeMenu(){ document.getElementById('nav-input').checked=false; }
+/* 目次リンク: メニューを閉じてからアンカーへスクロール */
+document.addEventListener('click', function(e){
+  const a = e.target.closest('a.index-link');
+  if(!a) return;
+  const href = a.getAttribute('href');
+  if(!href || !href.startsWith('#')) return;
+  e.preventDefault();
+  closeMenu();
+  const target = document.getElementById(href.slice(1));
+  if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}), 50);
+});
 <\/script>
 </body></html>`;
 }
