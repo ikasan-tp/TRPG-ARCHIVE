@@ -1626,7 +1626,7 @@ footer{text-align:center;padding:60px 32px calc(60px + env(safe-area-inset-botto
   </div>
   <footer>SESSION LOG // ${esc(title)}</footer>
 </div>
-<script>
+<` + `script>
 function toggleTab(cls,btn){
   btn.classList.toggle('active');
   document.getElementById('container').classList.toggle('hide-'+cls,!btn.classList.contains('active'));
@@ -1643,7 +1643,7 @@ document.addEventListener('click', function(e){
   const target = document.getElementById(href.slice(1));
   if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'start'}), 50);
 });
-<\/script>
+</` + `script>
 </body></html>`;
 }
 
