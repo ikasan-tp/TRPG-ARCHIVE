@@ -579,6 +579,10 @@ body::after {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9 8.5H9.5a2 2 0 000-4 2 2 0 00-3.9-.5A1.5 1.5 0 002.5 7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10l1.5-1.5L8 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span id="cloud-menu-label">クラウド設定</span>
         </div>
+        <div class="smenu-item" id="copy-share-link-item" onclick="copyShareLinkFromMenu()" style="display:none">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          共有リンクをコピー
+        </div>
       </div>
       <input type="file" id="import-bundle-input" accept=".trpgarchive.json,.json" style="display:none" onchange="importBundle(this.files[0])">
     </div>
@@ -1896,6 +1900,12 @@ async function testFirebaseConnection(){
     document.getElementById('fb-upload-btn').disabled=false;
     document.getElementById('fb-upload-btn').style.opacity='1';
     saveMeta();
+    /* 共有リンクをここでも生成して表示 */
+    const shareUrl=`${location.origin}${location.pathname}?view=${projectId}&key=${encodeURIComponent(apiKey)}`;
+    document.getElementById('share-link-display').textContent=shareUrl;
+    document.getElementById('cloud-share-section').style.display='block';
+    document.getElementById('cloud-menu-label').textContent='クラウド設定 (接続済)';
+    document.getElementById('copy-share-link-item').style.display='flex';
     toast('Firebase接続成功');
   }catch(err){
     setCloudStatus('err','接続失敗: '+err.message);
@@ -1927,6 +1937,7 @@ async function cloudUploadAll(){
     document.getElementById('share-link-display').textContent=shareUrl;
     document.getElementById('cloud-share-section').style.display='block';
     document.getElementById('cloud-menu-label').textContent='クラウド設定 (接続済)';
+    document.getElementById('copy-share-link-item').style.display='flex';
     updExport(100,'完了');
     sysMsg('cloud',`クラウドアップロード完了: ${S.logs.length}件`);
     setTimeout(hideExportOverlay,800);
@@ -1942,6 +1953,11 @@ function copyShareLink(){
   const link=document.getElementById('share-link-display').textContent;
   if(link==='—')return;
   navigator.clipboard.writeText(link).then(()=>toast('リンクをコピーしました')).catch(()=>toast('コピー失敗 — 手動でコピーしてください'));
+}
+function copyShareLinkFromMenu(){
+  document.getElementById('share-menu').classList.remove('open');
+  copyShareLink();
+}
 }
 
 /* 閲覧専用モード (URLに?view=projectId がある場合) */
