@@ -1991,6 +1991,7 @@ async function cloudDownloadAll(){
     toast('ダウンロードに失敗しました');
   }
 }
+function copyShareLink(){
   const link=document.getElementById('share-link-display').textContent;
   if(link==='—')return;
   navigator.clipboard.writeText(link).then(()=>toast('リンクをコピーしました')).catch(()=>toast('コピー失敗 — 手動でコピーしてください'));
