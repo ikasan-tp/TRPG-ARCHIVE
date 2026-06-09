@@ -1745,7 +1745,24 @@ async function openLog(id){
   sysMsg('info',`ログ表示: "${log.title}"`);
   await doScan('in');
   try{
-    const stored=await dbGet(id);
+    let stored=await dbGet(id);
+
+    /* 閲覧専用モード: ローカルにblobがなければFirestoreから直接取得 */
+    if(!stored){
+      const params=new URLSearchParams(location.search);
+      const projectId=params.get('view');
+      const apiKey=params.get('key')||fbConfig().apiKey||'';
+      if(projectId){
+        sysMsg('cloud',`Firestoreからblobを取得中: ${log.title}`);
+        const url=`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/archive/blobs/items/${id}${apiKey?`?key=${apiKey}`:''}`;
+        const r=await fetch(url);
+        if(r.ok){
+          const doc=await r.json();
+          stored=JSON.parse(doc.fields?.data?.stringValue||'null');
+        }
+      }
+    }
+
     if(!stored){
       sysMsg('err','データなし — 再インポートしてください');
       await doScan('out');
