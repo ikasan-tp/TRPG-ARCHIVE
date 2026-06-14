@@ -336,6 +336,9 @@ body::after {
 #log-view { position:fixed; inset:0; z-index:300; background:var(--bg); display:flex; flex-direction:column; opacity:0; visibility:hidden; transition:opacity .35s; }
 #log-view.open { opacity:1; visibility:visible; }
 #log-iframe { flex:1; border:none; width:100%; height:100%; padding-top:var(--header-h); background:var(--bg); }
+@media (max-width:680px) {
+  #log-iframe { padding-top:calc(var(--header-h) + env(safe-area-inset-top)); padding-bottom:env(safe-area-inset-bottom); }
+}
 #scan { position:fixed; inset:0; z-index:700; background:var(--bg); pointer-events:none; clip-path:inset(0 0 100% 0); }
 .scan-bars { height:100%; width:100%; background:repeating-linear-gradient(0deg,var(--accent-dim) 0px,var(--accent-dim) 1px,transparent 1px,transparent 6px); opacity:.25; }
 
@@ -1802,6 +1805,7 @@ async function openLog(id){
 
     document.getElementById('log-view').classList.add('open');
     document.getElementById('back-btn').classList.add('vis');
+    document.getElementById('bottom-nav').style.display='none';
     document.getElementById('sys-tabs').style.opacity='.3';
     document.getElementById('sys-tabs').style.pointerEvents='none';
     history.pushState({logId:id},'',`#/log/${id}`);
@@ -1816,6 +1820,7 @@ async function navigateToList(){
   document.getElementById('log-view').classList.remove('open');
   document.getElementById('log-iframe').src='about:blank';
   document.getElementById('back-btn').classList.remove('vis');
+  document.getElementById('bottom-nav').style.display='';
   document.getElementById('sys-tabs').style.opacity='';
   document.getElementById('sys-tabs').style.pointerEvents='';
   history.pushState({},'','#/');await doScan('out');sysMsg('sys','一覧に復帰');
