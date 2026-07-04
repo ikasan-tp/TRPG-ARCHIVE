@@ -358,7 +358,8 @@ body::after {
 .mf { margin-bottom:12px; }
 .mf label { font-family:'Montserrat'; font-size:.52rem; color:var(--accent); letter-spacing:.2em; display:block; margin-bottom:3px; }
 .mf input, .mf select { width:100%; background:#030303; border:1px solid #1c1c1c; color:var(--text); font-family:'Noto Sans JP'; font-size:.82rem; padding:8px 10px; border-radius:2px; outline:none; transition:border-color .2s; }
-.mf input:focus, .mf select:focus { border-color:var(--accent); }
+.mf textarea { width:100%; min-height:74px; resize:vertical; background:#030303; border:1px solid #1c1c1c; color:var(--text); font-family:'Noto Sans JP'; font-size:.82rem; padding:8px 10px; border-radius:2px; outline:none; transition:border-color .2s; line-height:1.7; }
+.mf input:focus, .mf select:focus, .mf textarea:focus { border-color:var(--accent); }
 .mf input::placeholder { color:#1e1e1e; }
 .modal-act { display:flex; gap:7px; justify-content:flex-end; margin-top:16px; }
 
@@ -378,6 +379,13 @@ body::after {
   background:var(--accent-dim);
   box-shadow:0 0 6px var(--accent-glow);
 }
+.tag-list { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; min-height:20px; }
+.tag-chip { display:inline-flex; align-items:center; gap:4px; max-width:100%; padding:3px 8px; border:1px solid color-mix(in srgb, var(--accent), transparent 58%); border-radius:2px; background:var(--accent-dim); color:#d8a9e8; font-family:'Montserrat','Noto Sans JP'; font-size:.52rem; letter-spacing:.05em; line-height:1.45; }
+.tag-chip.muted { border-color:#1d1d1d; background:#080808; color:#3a3a3a; }
+.card-note { margin-top:8px; color:#555; font-size:.68rem; line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.backup-panel { margin-top:14px; padding-top:14px; border-top:1px solid #111; }
+.backup-actions { display:flex; flex-wrap:wrap; gap:7px; }
+.backup-hint { margin-top:8px; color:#3e3e3e; font-size:.7rem; line-height:1.6; }
 .sp-tag-cnt {
   font-family:'Montserrat'; font-size:.46rem;
   color:#2e2e2e; background:#111;
@@ -628,8 +636,13 @@ html[data-theme="light"] .modal { background:#ffffff; box-shadow:0 0 60px rgba(6
 html[data-theme="light"] .modal-h { color:#211f26; }
 html[data-theme="light"] .modal-x { color:#c4c1cb; }
 html[data-theme="light"] .modal-x:hover { color:#211f26; }
-html[data-theme="light"] .mf input, html[data-theme="light"] .mf select { background:#fbfaf9; border-color:#e2e0e6; }
-html[data-theme="light"] .mf input::placeholder { color:#d4d1db; }
+html[data-theme="light"] .mf input, html[data-theme="light"] .mf select, html[data-theme="light"] .mf textarea { background:#fbfaf9; border-color:#e2e0e6; color:#33313a; }
+html[data-theme="light"] .mf input::placeholder, html[data-theme="light"] .mf textarea::placeholder { color:#d4d1db; }
+html[data-theme="light"] .tag-chip { color:#5a2a68; }
+html[data-theme="light"] .tag-chip.muted { background:#faf9fb; border-color:#eeecf1; color:#c4c1cb; }
+html[data-theme="light"] .card-note { color:#8a8791; }
+html[data-theme="light"] .backup-panel { border-top-color:#f0eef3; }
+html[data-theme="light"] .backup-hint { color:#8a8791; }
 
 html[data-theme="light"] .sp-tag { background:#f4f3f6; border-color:#e2e0e6; color:#a8a4b0; }
 html[data-theme="light"] .sp-tag:hover { color:#333; }
@@ -742,6 +755,15 @@ html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d
       </button>
       <div class="share-menu" id="share-menu">
         <div class="smenu-section">LOCAL FILE</div>
+        <div class="smenu-item" onclick="backupArchive()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          BACKUP
+        </div>
+        <div class="smenu-item" onclick="restoreArchive()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10V3M3 6l3-3 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          RESTORE
+        </div>
+        <div class="smenu-divider"></div>
         <div class="smenu-item" onclick="exportAll()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 4 3-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           すべてをエクスポート
@@ -910,6 +932,8 @@ html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d
       <input id="imp-pl" placeholder="クリックまたは手入力（カンマ区切り）" autocomplete="off" oninput="syncSpeakerTags()">
       <div id="imp-pl-suggestions" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;min-height:24px;"></div>
     </div>
+    <div class="mf"><label>TAGS</label><input id="imp-tags" placeholder="例：完結, 秘匿あり, KP済" autocomplete="off"></div>
+    <div class="mf"><label>MEMO</label><textarea id="imp-note" placeholder="このログに残しておきたいメモ"></textarea></div>
     <div class="mf"><label>FOLDER</label><select id="imp-folder"></select></div>
     <div class="mf"><label>SESSION COUNT</label><input id="imp-sess" type="number" min="1" value="1"></div>
     <div class="modal-act">
@@ -935,6 +959,8 @@ html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d
       </select>
     </div>
     <div class="mf"><label>PL NAMES （カンマ区切り）</label><input id="edit-pl" autocomplete="off"></div>
+    <div class="mf"><label>TAGS （カンマ区切り）</label><input id="edit-tags" autocomplete="off"></div>
+    <div class="mf"><label>MEMO</label><textarea id="edit-note"></textarea></div>
     <div class="mf">
       <label>FOLDER <span style="color:#3a3a3a;font-size:.48rem;letter-spacing:.05em;font-weight:400">— ここで移動できます</span></label>
       <select id="edit-folder"></select>
@@ -1030,6 +1056,15 @@ html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v6M2 5l3 3 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 9h8" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
         クラウドからダウンロード
       </button>
+    </div>
+
+    <div class="backup-panel">
+      <div class="cloud-step-body" style="margin-bottom:10px;">ローカル保存分をファイルに退避・復元できます。配布先での引き継ぎやブラウザ移行に使ってください。</div>
+      <div class="backup-actions">
+        <button class="btn-g" onclick="backupArchive()">BACKUP</button>
+        <button class="btn-g" onclick="restoreArchive()">RESTORE</button>
+      </div>
+      <div class="backup-hint">復元は既存データに追加します。同じIDのログは重複登録されません。</div>
     </div>
 
     <!-- share link section (shown after upload) -->
@@ -1178,9 +1213,11 @@ let S={folders:[],logs:[],sysFilter:'ALL',folderFilter:'ALL',view:'grid'};
 let pendingHTML=null,pendingFile=null,pendingHash=null;
 let totalOrig=0,totalSaved=0;
 let fbConnected=false;
+const searchCache = {};
+let searchIndexing = false;
 
 function loadMeta(){
-  try{const d=JSON.parse(localStorage.getItem(META_KEY)||'{}');S.folders=d.folders||[];S.logs=d.logs||[];totalOrig=d.totalOrig||0;totalSaved=d.totalSaved||0;
+  try{const d=JSON.parse(localStorage.getItem(META_KEY)||'{}');S.folders=d.folders||[];S.logs=(d.logs||[]).map(normalizeLogMeta);totalOrig=d.totalOrig||0;totalSaved=d.totalSaved||0;
   const fb=d.firebase;if(fb){document.getElementById('fb-api-key').value=fb.apiKey||'';document.getElementById('fb-project-id').value=fb.projectId||'';document.getElementById('fb-auth-domain').value=fb.authDomain||'';}}catch(e){sysMsg('err','メタ読込失敗: '+e.message);}
 }
 function saveMeta(){
@@ -1191,6 +1228,21 @@ function saveMeta(){
 /* ══════════════════════════════════════════════
    SYSTEM MESSAGES
 ══════════════════════════════════════════════ */
+function parseTags(value){
+  if(Array.isArray(value))return [...new Set(value.map(t=>String(t).trim()).filter(Boolean))];
+  return [...new Set(String(value||'').split(/[,\u3001]/).map(t=>t.trim()).filter(Boolean))];
+}
+function normalizeLogMeta(log){
+  log.tags=parseTags(log.tags);
+  log.note=String(log.note||'');
+  return log;
+}
+function tagsHTML(tags, muted=false){
+  const list=parseTags(tags);
+  if(!list.length)return '';
+  return `<div class="tag-list">${list.slice(0,8).map(t=>`<span class="tag-chip${muted?' muted':''}">${escH(t)}</span>`).join('')}</div>`;
+}
+
 function sysMsg(type,text){
   const w=document.getElementById('smsg-scroll'),l=document.getElementById('smsg-live');
   const n=new Date(),ts=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
@@ -1327,7 +1379,8 @@ function renderCards(){
   let logs=S.logs.filter(l=>{
     const sOk=S.sysFilter==='ALL'||l.system===S.sysFilter;
     const fOk=S.folderFilter==='ALL'?true:S.folderFilter==='FAV'?!!l.favorite:l.folder===S.folderFilter;
-    const qOk=!q||l.title.toLowerCase().includes(q)||(l.pl||'').toLowerCase().includes(q)||l.system.toLowerCase().includes(q);
+    const metaText=[l.title,l.pl,l.system,(l.tags||[]).join(' '),l.note,searchCache[l.id]||''].join(' ').toLowerCase();
+    const qOk=!q||metaText.includes(q);
     return sOk&&fOk&&qOk;
   });
   logs.sort((a,b)=>{
@@ -1360,6 +1413,8 @@ function renderCards(){
         <div class="card-sys" style="color:${fc}">${escH(l.system)}</div>
         <div class="card-ttl">${escH(l.title)}</div>
         <div class="card-tags">${pls.slice(0,4).map(p=>`<span class="ctag pl" style="border-color:${fc}40;color:${fc};background:${hexToRgba(fc,0.1)}">${escH(p)}</span>`).join('')}</div>
+        ${tagsHTML(l.tags)}
+        ${l.note?`<div class="card-note">${escH(l.note)}</div>`:''}
       </div>
       <div class="card-foot">
         <span class="card-date">${l.date}</span>
@@ -1395,6 +1450,37 @@ function renderStats(){
   document.getElementById('comp-info').textContent=totalOrig>0?`${ratio}% reduced`:CAN_COMPRESS?'gzip ready':'unavail.';
 }
 function renderAll(){renderFolders();renderCards();renderRecent();renderStats();}
+
+function stripHTMLText(html){
+  const tmp=document.createElement('div');
+  tmp.innerHTML=html||'';
+  return tmp.textContent||tmp.innerText||'';
+}
+function makeSearchTextFromJSON(data){
+  if(!data)return '';
+  const rows=(data.rows||[]).map(r=>[r.name,r.tab,stripHTMLText(r.content)].join(' ')).join(' ');
+  return [data.title,data.brand,data.system,rows].join(' ').replace(/\s+/g,' ').trim().toLowerCase();
+}
+async function hydrateSearchIndex(){
+  if(searchIndexing||!db)return;
+  searchIndexing=true;
+  try{
+    for(const log of S.logs){
+      if(searchCache[log.id])continue;
+      const stored=await dbGet(log.id);
+      if(!stored)continue;
+      const raw=await decompress(stored);
+      if(stored.format==='json_v1')searchCache[log.id]=makeSearchTextFromJSON(JSON.parse(raw));
+      else searchCache[log.id]=stripHTMLText(raw).replace(/\s+/g,' ').trim().toLowerCase();
+    }
+    renderCards();
+    sysMsg('ok','本文検索インデックスを更新しました');
+  }catch(e){
+    sysMsg('warn','本文検索インデックスの更新に失敗: '+e.message);
+  }finally{
+    searchIndexing=false;
+  }
+}
 
 /* ══════════════════════════════════════════════
    FILTERS / VIEW
@@ -1491,6 +1577,8 @@ function processFile(file){
     document.getElementById('imp-title').value=title;
     document.getElementById('imp-sys').value=sys;
     document.getElementById('imp-pl').value='';
+    document.getElementById('imp-tags').value='';
+    document.getElementById('imp-note').value='';
     document.getElementById('imp-sess').value=sess;
     setProgress(100);
     const sessSource = !isNaN(prefixNum) ? 'ファイル名より' : 'INDEXより';
@@ -1602,6 +1690,8 @@ function closeModal(id){
     const sg = document.getElementById('imp-pl-suggestions');
     if(sg) sg.innerHTML='';
     document.getElementById('imp-pl').value='';
+    document.getElementById('imp-tags').value='';
+    document.getElementById('imp-note').value='';
   }
 }
 function openImportModal(){renderFolders();openModal('import-modal');}
@@ -1621,6 +1711,8 @@ function openEditModal(e,id){
   document.getElementById('edit-title').value=log.title;
   document.getElementById('edit-sys').value=log.system;
   document.getElementById('edit-pl').value=log.pl||'';
+  document.getElementById('edit-tags').value=parseTags(log.tags).join(', ');
+  document.getElementById('edit-note').value=log.note||'';
   document.getElementById('edit-sess').value=log.sessions;
   document.getElementById('edit-date').value=log.date;
   renderFolders();
@@ -1633,6 +1725,8 @@ function confirmEdit(){
   log.title=document.getElementById('edit-title').value.trim()||log.title;
   log.system=document.getElementById('edit-sys').value;
   log.pl=document.getElementById('edit-pl').value;
+  log.tags=parseTags(document.getElementById('edit-tags').value);
+  log.note=document.getElementById('edit-note').value.trim();
   log.folder=document.getElementById('edit-folder').value;
   log.sessions=parseInt(document.getElementById('edit-sess').value)||1;
   log.date=document.getElementById('edit-date').value||log.date;
@@ -1921,6 +2015,8 @@ async function confirmImport(){
     title,
     system: document.getElementById('imp-sys').value,
     pl:     document.getElementById('imp-pl').value,
+    tags:   parseTags(document.getElementById('imp-tags').value),
+    note:   document.getElementById('imp-note').value.trim(),
     sessions: parseInt(document.getElementById('imp-sess').value)||1,
     folder: document.getElementById('imp-folder').value,
     date:   new Date().toISOString().split('T')[0],
@@ -1959,8 +2055,9 @@ async function confirmImport(){
     totalOrig  += origBytes;
     totalSaved += finalBytes;
 
-    const log = { id, ...meta };
+    const log = normalizeLogMeta({ id, ...meta });
     S.logs.unshift(log);
+    searchCache[id]=makeSearchTextFromJSON(jsonData);
     saveMeta();
     setProgress(100);
     sysMsg('ok',`登録完了: "${title}" [${id}]`);
@@ -2002,7 +2099,7 @@ async function deleteLog(e,id){
   e.stopPropagation();
   const log=S.logs.find(l=>l.id===id);if(!log)return;
   if(!confirm(`「${log.title}」を削除しますか？`))return;
-  try{await dbDel(id);S.logs=S.logs.filter(l=>l.id!==id);saveMeta();renderAll();sysMsg('ok',`削除: "${log.title}"`);toast(`「${log.title}」を削除しました`);}catch(err){sysMsg('err','削除失敗: '+err.message);}
+  try{await dbDel(id);delete searchCache[id];S.logs=S.logs.filter(l=>l.id!==id);saveMeta();renderAll();sysMsg('ok',`削除: "${log.title}"`);toast(`「${log.title}」を削除しました`);}catch(err){sysMsg('err','削除失敗: '+err.message);}
 }
 
 /* ══════════════════════════════════════════════
@@ -2115,6 +2212,15 @@ function updExport(pct,sub){document.getElementById('exp-bar').style.width=pct+'
 function hideExportOverlay(){document.getElementById('export-overlay').classList.remove('open');}
 
 async function exportAll(){document.getElementById('share-menu').classList.remove('open');await exportLogs(S.logs,'trpg-archive-all');}
+async function backupArchive(){
+  document.getElementById('share-menu').classList.remove('open');
+  const stamp=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  await exportLogs(S.logs,`trpg-archive-backup-${stamp}`);
+}
+function restoreArchive(){
+  document.getElementById('share-menu').classList.remove('open');
+  triggerImportBundle();
+}
 async function exportFolder(){
   document.getElementById('share-menu').classList.remove('open');
   const logs=S.folderFilter==='ALL'?S.logs:S.logs.filter(l=>l.folder===S.folderFilter);
@@ -2157,9 +2263,9 @@ async function importBundle(file){
       const lm=bundle.meta.logs.find(l=>l.id===b.id);
       if(!lm)continue;
       updExport(20+Math.round((i/bundle.blobs.length)*70),`${i+1}/${bundle.blobs.length}: ${lm.title}`);
-      if(!S.logs.find(l=>l.id===lm.id)){S.logs.push(lm);await dbPut(b.id,{data:b.data,compressed:b.compressed});added++;}
+      if(!S.logs.find(l=>l.id===lm.id)){S.logs.push(normalizeLogMeta(lm));await dbPut(b.id,{data:b.data,compressed:b.compressed,format:b.format});added++;}
     }
-    saveMeta();updExport(100,'完了');sysMsg('ok',`インポート完了: ${added}件追加`);renderAll();setTimeout(hideExportOverlay,800);toast(`${added}件をインポートしました`);
+    saveMeta();updExport(100,'完了');sysMsg('ok',`インポート完了: ${added}件追加`);renderAll();hydrateSearchIndex();setTimeout(hideExportOverlay,800);toast(`${added}件をインポートしました`);
   }catch(err){hideExportOverlay();sysMsg('err','インポート失敗: '+err.message);toast('インポートに失敗しました');}
   document.getElementById('import-bundle-input').value='';
 }
@@ -2265,9 +2371,10 @@ async function cloudDownloadAll(){
       }
     }
     // ローカル反映
-    S.folders=folders; S.logs=logs;
+    S.folders=folders; S.logs=logs.map(normalizeLogMeta);
     saveMeta();
     renderAll();
+    hydrateSearchIndex();
     updExport(100,'完了');
     sysMsg('ok',`クラウドから取込完了: ${logs.length}件`);
     setTimeout(hideExportOverlay,800);
@@ -2305,8 +2412,9 @@ async function checkViewMode(){
     const doc=await r.json();
     const folders=JSON.parse(doc.fields?.folders?.stringValue||'[]');
     const logs=JSON.parse(doc.fields?.logs?.stringValue||'[]');
-    S.folders=folders;S.logs=logs;
+    S.folders=folders;S.logs=logs.map(normalizeLogMeta);
     renderAll();
+    hydrateSearchIndex();
     sysMsg('ok',`クラウドから読込完了: ${logs.length}件`);
     return true;
   }catch(err){sysMsg('err','クラウド読込失敗: '+err.message);return false;}
@@ -2485,6 +2593,7 @@ async function init(){
   loadMeta();
   const isViewer=await checkViewMode();
   if(!isViewer)renderAll();
+  hydrateSearchIndex();
   sysMsg('sys',`起動完了 — ${S.logs.length}件 / ${S.folders.length}フォルダ`);
   if(location.hash.startsWith('#/log/'))setTimeout(()=>openLog(location.hash.replace('#/log/','')),150);
   sysMsg('ok','待機状態');
