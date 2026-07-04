@@ -264,7 +264,7 @@ body::after {
 .card-sys { font-family:'Montserrat'; font-weight:900; font-size:.47rem; color:var(--accent); letter-spacing:.32em; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
 .card-sys::before { content:''; display:inline-block; width:4px; height:4px; background:var(--accent); border-radius:50%; }
 .card-ttl { font-family:'Noto Sans JP'; font-weight:700; font-size:.86rem; color:#eee; margin-bottom:6px; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.card-tags { display:flex; flex-wrap:wrap; gap:4px; }
+.card-tags { display:flex; flex-wrap:wrap; gap:4px; max-height:22px; overflow:hidden; }
 .ctag { font-family:'Montserrat'; font-size:.48rem; padding:2px 7px; border-radius:20px; background:#0e0e0e; border:1px solid #1e1e1e; color:#484848; }
 .ctag.pl { border-color:rgba(120,35,140,.35); color:#9858b8; background:var(--accent-dim); }
 .card-foot { padding:6px 13px; border-top:1px dashed #111; display:flex; justify-content:space-between; align-items:center; }
@@ -379,10 +379,10 @@ body::after {
   background:var(--accent-dim);
   box-shadow:0 0 6px var(--accent-glow);
 }
-.tag-list { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; min-height:20px; }
+.tag-list { display:contents; }
 .tag-chip { display:inline-flex; align-items:center; gap:4px; max-width:100%; padding:3px 8px; border:1px solid color-mix(in srgb, var(--accent), transparent 58%); border-radius:2px; background:var(--accent-dim); color:#d8a9e8; font-family:'Montserrat','Noto Sans JP'; font-size:.52rem; letter-spacing:.05em; line-height:1.45; }
 .tag-chip.muted { border-color:#1d1d1d; background:#080808; color:#3a3a3a; }
-.card-note { margin-top:8px; color:#555; font-size:.68rem; line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.card-note { display:none; }
 .backup-panel { margin-top:14px; padding-top:14px; border-top:1px solid #111; }
 .backup-actions { display:flex; flex-wrap:wrap; gap:7px; }
 .backup-hint { margin-top:8px; color:#3e3e3e; font-size:.7rem; line-height:1.6; }
@@ -1412,9 +1412,7 @@ function renderCards(){
       <div class="card-body">
         <div class="card-sys" style="color:${fc}">${escH(l.system)}</div>
         <div class="card-ttl">${escH(l.title)}</div>
-        <div class="card-tags">${pls.slice(0,4).map(p=>`<span class="ctag pl" style="border-color:${fc}40;color:${fc};background:${hexToRgba(fc,0.1)}">${escH(p)}</span>`).join('')}</div>
-        ${tagsHTML(l.tags)}
-        ${l.note?`<div class="card-note">${escH(l.note)}</div>`:''}
+        <div class="card-tags">${pls.slice(0,4).map(p=>`<span class="ctag pl" style="border-color:${fc}40;color:${fc};background:${hexToRgba(fc,0.1)}">${escH(p)}</span>`).join('')}${tagsHTML(l.tags)}</div>
       </div>
       <div class="card-foot">
         <span class="card-date">${l.date}</span>
