@@ -134,6 +134,7 @@ body::after {
 .btn-g:hover { border-color:#555; color:#ccc; }
 .btn-cloud { font-family:'Montserrat'; font-weight:700; font-size:.6rem; padding:6px 11px; background:transparent; border:1px solid #1a3a6a; border-radius:2px; color:#4a7aaa; cursor:pointer; letter-spacing:.1em; transition:all .2s; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
 .btn-cloud:hover { border-color:#3a6aaa; color:#8ab0d8; background:rgba(26,58,106,.15); }
+.btn-p, .btn-g, .btn-cloud { min-height:34px; justify-content:center; }
 
 /* share dropdown */
 .share-wrap { position:relative; }
@@ -386,6 +387,17 @@ body::after {
 .backup-panel { margin-top:14px; padding-top:14px; border-top:1px solid #111; }
 .backup-actions { display:flex; flex-wrap:wrap; gap:7px; }
 .backup-hint { margin-top:8px; color:#3e3e3e; font-size:.7rem; line-height:1.6; }
+.cloud-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; align-items:stretch; margin-top:16px; }
+.cloud-actions-left, .cloud-actions-right { display:grid; grid-template-columns:1fr; gap:8px; align-items:stretch; }
+.cloud-actions .btn-g, .cloud-actions .btn-cloud, .cloud-actions .btn-p { width:100%; padding:7px 11px; }
+#cloud-modal .modal-act[style*="flex-wrap"] { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; align-items:stretch; }
+#cloud-modal .modal-act[style*="flex-wrap"] .btn-g,
+#cloud-modal .modal-act[style*="flex-wrap"] .btn-cloud,
+#cloud-modal .modal-act[style*="flex-wrap"] .btn-p { width:100%; padding:7px 11px; }
+@media (max-width:420px) {
+  .cloud-actions,
+  #cloud-modal .modal-act[style*="flex-wrap"] { grid-template-columns:1fr; }
+}
 .sp-tag-cnt {
   font-family:'Montserrat'; font-size:.46rem;
   color:#2e2e2e; background:#111;
@@ -476,6 +488,16 @@ body::after {
 .cloud-step-body { font-size:.74rem; color:#4a4a4a; line-height:1.6; }
 .cloud-step-body a { color:#4a7aaa; text-decoration:none; }
 .cloud-step-body a:hover { color:#8ab0d8; }
+#cloud-modal .modal > div[style*="letter-spacing:.2em"][style*="margin-bottom:10px"],
+#cloud-modal .modal > .cloud-step { display:none; }
+.setup-guide { margin-bottom:14px; border:1px solid #111; border-radius:2px; background:#040404; overflow:hidden; }
+.setup-guide summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 13px; color:#aaa; font-family:'Montserrat','Noto Sans JP'; font-size:.62rem; font-weight:700; letter-spacing:.1em; }
+.setup-guide summary::-webkit-details-marker { display:none; }
+.setup-guide summary::after { content:'+'; color:#4a7aaa; font-size:.9rem; line-height:1; transition:transform .2s; }
+.setup-guide[open] summary::after { content:'-'; }
+.setup-guide-intro { padding:0 13px 12px; color:#4a4a4a; font-size:.72rem; line-height:1.7; border-top:1px solid #0e0e0e; }
+.setup-guide-body { padding:0 13px 13px; }
+.setup-guide-note { margin-top:9px; color:#5a5a5a; font-size:.7rem; line-height:1.7; }
 .cloud-status { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid #111; border-radius:2px; margin-bottom:12px; }
 .cloud-dot { width:6px; height:6px; border-radius:50%; background:#1e1e1e; flex-shrink:0; }
 .cloud-dot.ok { background:var(--ok); box-shadow:0 0 5px var(--ok); }
@@ -664,6 +686,10 @@ html[data-theme="light"] .cloud-plan-desc { color:#8a8791; }
 html[data-theme="light"] .cloud-plan.selected .cloud-plan-desc { color:#6a6772; }
 html[data-theme="light"] .cloud-step { background:#faf9fb; border-color:#f0eef3; }
 html[data-theme="light"] .cloud-step-body { color:#726f79; }
+html[data-theme="light"] .setup-guide { background:#ffffff; border-color:#f0eef3; }
+html[data-theme="light"] .setup-guide summary { color:#4a4750; }
+html[data-theme="light"] .setup-guide-intro { color:#726f79; border-top-color:#f0eef3; }
+html[data-theme="light"] .setup-guide-note { color:#8a8791; }
 html[data-theme="light"] .cloud-status { border-color:#f0eef3; }
 html[data-theme="light"] .cloud-dot { background:#e2e0e6; }
 html[data-theme="light"] .cloud-status-text { color:#a8a4b0; }
@@ -1013,6 +1039,37 @@ html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d
       <span class="cloud-status-text" id="cloud-status-text">未接続 — Firebase APIキーを入力してください</span>
     </div>
 
+    <details class="setup-guide">
+      <summary>SETUP GUIDE</summary>
+      <div class="setup-guide-intro">
+        CLOUD SHAREは、Firebase Firestoreにアーカイブを置いて別端末や他の人と共有するための機能です。使わない場合は、下のBACKUP / RESTOREだけでも引き継ぎできます。
+      </div>
+      <div class="setup-guide-body">
+        <div class="cloud-step">
+          <span class="cloud-step-n">1</span>
+          <div class="cloud-step-body">
+            <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a>でプロジェクトを作成し、Firestore Databaseを有効にします。<br>
+            まず試すだけなら、ルールを<code style="color:#6a6a6a;font-size:.7rem;">allow read, write: if true;</code>にすると接続確認しやすいです。
+          </div>
+        </div>
+        <div class="cloud-step">
+          <span class="cloud-step-n">2</span>
+          <div class="cloud-step-body">
+            プロジェクト設定からWebアプリを追加し、表示された<code style="color:#6a6a6a;font-size:.7rem;">firebaseConfig</code>を確認します。<br>
+            <code style="color:#6a6a6a;font-size:.7rem;">apiKey</code>、<code style="color:#6a6a6a;font-size:.7rem;">projectId</code>、<code style="color:#6a6a6a;font-size:.7rem;">authDomain</code>を下の欄に入力してください。
+          </div>
+        </div>
+        <div class="cloud-step">
+          <span class="cloud-step-n">3</span>
+          <div class="cloud-step-body">
+            TESTで接続を確認し、UPLOADで現在のアーカイブをFirestoreへ保存します。<br>
+            生成された共有リンクを開くと、別端末から同じアーカイブを閲覧できます。
+          </div>
+        </div>
+        <div class="setup-guide-note">公開配布する場合は、Firestoreのルールを用途に合わせて制限してください。個人利用や短期共有なら、バックアップファイル運用でも十分です。</div>
+      </div>
+    </details>
+
     <!-- Firebase setup steps -->
     <div style="font-family:'Montserrat';font-size:.52rem;color:var(--accent);letter-spacing:.2em;margin-bottom:10px;">SETUP GUIDE</div>
 
@@ -1237,10 +1294,12 @@ function normalizeLogMeta(log){
   log.note=String(log.note||'');
   return log;
 }
-function tagsHTML(tags, muted=false){
+function tagsHTML(tags, color='var(--accent)', muted=false){
   const list=parseTags(tags);
   if(!list.length)return '';
-  return `<div class="tag-list">${list.slice(0,8).map(t=>`<span class="tag-chip${muted?' muted':''}">${escH(t)}</span>`).join('')}</div>`;
+  const bg=hexToRgba(color,0.1);
+  const border=hexToRgba(color,0.4);
+  return `<div class="tag-list">${list.slice(0,8).map(t=>`<span class="tag-chip${muted?' muted':''}" style="border-color:${border};color:${color};background:${bg}">${escH(t)}</span>`).join('')}</div>`;
 }
 
 function sysMsg(type,text){
@@ -1412,7 +1471,7 @@ function renderCards(){
       <div class="card-body">
         <div class="card-sys" style="color:${fc}">${escH(l.system)}</div>
         <div class="card-ttl">${escH(l.title)}</div>
-        <div class="card-tags">${pls.slice(0,4).map(p=>`<span class="ctag pl" style="border-color:${fc}40;color:${fc};background:${hexToRgba(fc,0.1)}">${escH(p)}</span>`).join('')}${tagsHTML(l.tags)}</div>
+        <div class="card-tags">${pls.slice(0,4).map(p=>`<span class="ctag pl" style="border-color:${hexToRgba(fc,0.4)};color:${fc};background:${hexToRgba(fc,0.1)}">${escH(p)}</span>`).join('')}${tagsHTML(l.tags,fc)}</div>
       </div>
       <div class="card-foot">
         <span class="card-date">${l.date}</span>
@@ -1678,7 +1737,7 @@ document.addEventListener('drop', e=>{
 /* ══════════════════════════════════════════════
    MODALS
 ══════════════════════════════════════════════ */
-function openModal(id){renderFolders();document.getElementById(id).classList.add('open');setTimeout(()=>document.getElementById(id).querySelector('input,select')?.focus(),50);}
+function openModal(id, refreshFolders=true){if(refreshFolders)renderFolders();document.getElementById(id).classList.add('open');setTimeout(()=>document.getElementById(id).querySelector('input,select')?.focus(),50);}
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
   if(id==='import-modal'){
@@ -1692,7 +1751,7 @@ function closeModal(id){
     document.getElementById('imp-note').value='';
   }
 }
-function openImportModal(){renderFolders();openModal('import-modal');}
+function openImportModal(){openModal('import-modal');}
 function openFolderModal(){
   document.getElementById('fld-name').value='';
   initColorPicker();
@@ -1715,7 +1774,7 @@ function openEditModal(e,id){
   document.getElementById('edit-date').value=log.date;
   renderFolders();
   document.getElementById('edit-folder').value=log.folder||'';
-  openModal('edit-modal');
+  openModal('edit-modal', false);
 }
 function confirmEdit(){
   const id=document.getElementById('edit-id').value;
@@ -1901,9 +1960,10 @@ function buildViewerHTML(data, folderColor) {
   const extraCSS = customCSS
     ? `\n/* tab-custom styles */\n${customCSS}`
     : '';
+  const viewerTheme = document.documentElement.getAttribute('data-theme') === 'light' ? ' data-theme="light"' : '';
 
   return `<!DOCTYPE html>
-<html lang="ja"><head>
+<html lang="ja"${viewerTheme}><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>${esc(title)}</title>
@@ -1950,7 +2010,29 @@ ruby{ruby-align:center;}rt{font-size:.6em;color:#888;}
 .hero-title-area{padding:40px 25px 25px;border-bottom:1px solid #111;}
 .hero-brand{font-family:'Montserrat';font-size:.6rem;font-weight:900;color:var(--accent);letter-spacing:.5em;display:block;margin-bottom:8px;}
 .hero-title{font-family:'Montserrat','Noto Sans JP';font-size:1.5rem;font-weight:900;color:#fff;border-left:3px solid var(--accent);padding-left:15px;}
-footer{text-align:center;padding:60px 32px calc(60px + env(safe-area-inset-bottom));font-family:'Montserrat';font-size:.6rem;opacity:.2;margin-top:auto;}${extraCSS}
+footer{text-align:center;padding:60px 32px calc(60px + env(safe-area-inset-bottom));font-family:'Montserrat';font-size:.6rem;opacity:.2;margin-top:auto;}
+html[data-theme="light"]{--outer-bg:#f4f3f6;--inner-bg:#ffffff;--block-bg:#faf9fb;--text:#33313a;--sub-line:#b9b5c0;--border:#e6e4ea;--tab-text:#a8a4b0;}
+html[data-theme="light"] body::after{background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px);}
+html[data-theme="light"] header{background:rgba(255,255,255,.97);border-bottom-color:var(--border);}
+html[data-theme="light"] .header-title{color:#211f26;}
+html[data-theme="light"] .nav-overlay{background:rgba(40,30,45,.35);}
+html[data-theme="light"] .nav-content{background:#ffffff;border-left-color:var(--border);box-shadow:-12px 0 40px rgba(60,40,70,.12);}
+html[data-theme="light"] .nav-section{border-bottom-color:#f0eef3;}
+html[data-theme="light"] .filter-btn{background:#f4f3f6;border-color:#e6e4ea;color:#8a8791;}
+html[data-theme="light"] .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+html[data-theme="light"] .index-link{color:#726f79;border-bottom-color:#f0eef3;}
+html[data-theme="light"] .index-link:hover{background:rgba(120,35,140,.06);color:#211f26;}
+html[data-theme="light"] .container{box-shadow:0 0 0 1px rgba(230,228,234,.5);}
+html[data-theme="light"] .log-row{border-bottom-color:#eeecf1;}
+html[data-theme="light"] .row-name{color:#211f26;}
+html[data-theme="light"] .row-content{color:#3f3b46;}
+html[data-theme="light"] rt{color:#8a8791;}
+html[data-theme="light"] .style-chat{border-left-color:#e6e4ea;opacity:.9;}
+html[data-theme="light"] .row-system{color:#7a7580;}
+html[data-theme="light"] .hero-title-area{border-bottom-color:#eeecf1;}
+html[data-theme="light"] .hero-title{color:#211f26;}
+html[data-theme="light"] footer{color:#8a8791;opacity:.45;}
+${extraCSS}
 </style></head><body>
 <input id="nav-input" type="checkbox" class="nav-uncheck">
 <label for="nav-input" class="nav-overlay"></label>
@@ -2159,6 +2241,7 @@ async function openLog(id){
     const iframe=document.getElementById('log-iframe');
     iframe.onload=async()=>{
       URL.revokeObjectURL(url);
+      syncViewerTheme(document.documentElement.getAttribute('data-theme')==='light'?'light':'dark');
       sysMsg('ok',`表示完了: "${log.title}"`);
       await doScan('out');
     };
@@ -2465,6 +2548,17 @@ function applyTheme(theme, save=true){
   if(theme==='light') document.documentElement.setAttribute('data-theme','light');
   else document.documentElement.removeAttribute('data-theme');
   if(save) localStorage.setItem(THEME_STORAGE_KEY, theme);
+  syncViewerTheme(theme);
+}
+
+function syncViewerTheme(theme){
+  try{
+    const iframe=document.getElementById('log-iframe');
+    const doc=iframe?.contentDocument;
+    if(!doc?.documentElement)return;
+    if(theme==='light')doc.documentElement.setAttribute('data-theme','light');
+    else doc.documentElement.removeAttribute('data-theme');
+  }catch(e){}
 }
 
 function toggleTheme(){
