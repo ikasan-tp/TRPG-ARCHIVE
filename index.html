@@ -219,7 +219,7 @@ body::after {
 .f-toggle-ico { transition:transform .25s; display:block; }
 .f-toggle-ico.open { transform:rotate(90deg); }
 
-#sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:498; backdrop-filter:blur(2px); }
+#sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:470; backdrop-filter:blur(2px); }
 
 /* ── MAIN ── */
 #main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
@@ -399,6 +399,14 @@ body::after {
   background:none; border-radius:3px; cursor:pointer; outline:none;
 }
 .color-custom-label { font-family:'Montserrat'; font-size:.52rem; color:#3a3a3a; }
+.color-hex-input {
+  font-family:'Montserrat'; font-size:.62rem; letter-spacing:.03em;
+  background:#0a0a0a; border:1px solid #2a2a2a; color:#ccc;
+  padding:5px 8px; border-radius:2px; width:82px; outline:none;
+  transition:border-color .2s;
+}
+.color-hex-input:focus { border-color:var(--accent); }
+.color-hex-input::placeholder { color:#333; }
 
 /* ── アクセントカラー設定 ── */
 #accent-modal .modal { border-top-color: #3a3a5a; }
@@ -481,7 +489,7 @@ body::after {
 .toast-t { font-size:.76rem; color:#ccc; }
 
 /* ── MOBILE BOTTOM NAV ── */
-#bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(5,5,5,.97); border-top:1px solid var(--border); padding-bottom:var(--safe-b); z-index:499; }
+#bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(5,5,5,.97); border-top:1px solid var(--border); padding-bottom:var(--safe-b); z-index:480; }
 .bnav { display:flex; justify-content:space-around; }
 .bnav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 16px; background:none; border:none; color:var(--tab-text); cursor:pointer; transition:color .2s; font-family:'Montserrat'; font-size:.42rem; letter-spacing:.1em; min-width:60px; }
 .bnav-btn:hover, .bnav-btn.active { color:var(--accent); }
@@ -502,7 +510,7 @@ body::after {
   .logo span { display:none; }
   .sys-tabs { display:none; }
   .hdr-right .srch-wrap { display:none; }
-  #sidebar { position:fixed; top:0; left:0; height:100%; z-index:499; transform:translateX(-100%); border-right:1px solid var(--border-mid); }
+  #sidebar { position:fixed; top:0; left:0; height:100%; z-index:495; transform:translateX(-100%); border-right:1px solid var(--border-mid); }
   #sidebar.mobile-open { transform:translateX(0); }
   #sb-overlay { display:block; }
   #sysmsg { display:none; }
@@ -513,6 +521,169 @@ body::after {
   .hdr-right .share-wrap { display:none; }
   #toast { bottom:calc(78px + var(--safe-b)); right:12px; left:12px; max-width:none; }
 }
+
+/* ══════════════════════════════════════════════
+   LIGHT MODE
+══════════════════════════════════════════════ */
+html[data-theme="light"] {
+  --bg:          #f4f3f6;
+  --bg-deep:     #ffffff;
+  --text:        #33313a;
+  --border:      #e6e4ea;
+  --border-mid:  #d9d6e0;
+  --tab-text:    #9a97a3;
+}
+html[data-theme="light"] body::after { background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px); }
+html[data-theme="light"] #hdr { background:rgba(255,255,255,.97); border-bottom-color:var(--border); }
+html[data-theme="light"] .logo { color:#211f26; }
+html[data-theme="light"] #hamburger { color:#a09da8; }
+html[data-theme="light"] #back-btn { color:#8a8791; border-color:var(--border-mid); }
+html[data-theme="light"] #back-btn:hover { color:#78238C; background:var(--accent-dim); }
+html[data-theme="light"] .stab { border-color:#e2e0e6; }
+html[data-theme="light"] .stab:hover { color:#555; border-color:#c8c5cf; }
+html[data-theme="light"] .stab.on { color:#5a2a68; }
+html[data-theme="light"] .hdr-right { border-left-color:var(--border); }
+html[data-theme="light"] .srch { background:#fbfaf9; border-color:#e2e0e6; color:#33313a; }
+html[data-theme="light"] .srch::placeholder { color:#c4c1cb; }
+html[data-theme="light"] .btn-g { border-color:#dedbe2; color:#8a8791; }
+html[data-theme="light"] .btn-g:hover { border-color:#a8a4b0; color:#333; }
+html[data-theme="light"] .btn-cloud { color:#2f5a8a; }
+html[data-theme="light"] .btn-cloud:hover { color:#1a3a6a; background:rgba(26,58,106,.08); }
+html[data-theme="light"] .share-menu { background:#ffffff; box-shadow:0 8px 32px rgba(80,60,90,.18); }
+html[data-theme="light"] .smenu-item { color:#726f79; border-bottom-color:#f0eef3; }
+html[data-theme="light"] .smenu-item:hover { color:#221f28; }
+html[data-theme="light"] .smenu-divider { background:#eeecf1; }
+html[data-theme="light"] .smenu-section { color:#c4c1cb; }
+
+html[data-theme="light"] .sb-scroll,
+html[data-theme="light"] #card-area,
+html[data-theme="light"] .smsg-scroll,
+html[data-theme="light"] .up-rec-scroll,
+html[data-theme="light"] * { scrollbar-color:#d4d1db transparent; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb,
+html[data-theme="light"] .sb-scroll::-webkit-scrollbar-thumb,
+html[data-theme="light"] #card-area::-webkit-scrollbar-thumb,
+html[data-theme="light"] .smsg-scroll::-webkit-scrollbar-thumb,
+html[data-theme="light"] .up-rec-scroll::-webkit-scrollbar-thumb { background:#d4d1db; }
+
+html[data-theme="light"] .f-row { color:#847f8c; border-bottom-color:rgba(225,222,230,.8); }
+html[data-theme="light"] .f-row:hover { color:#2a2830; background:rgba(120,35,140,.045); }
+html[data-theme="light"] .f-row.sel { color:#5a2a68; }
+html[data-theme="light"] .f-cnt { color:#c4c1cb; background:#f1eff4; }
+html[data-theme="light"] .f-del-btn { color:#e3e0e8; }
+html[data-theme="light"] .f-log-list { background:#faf9fb; border-bottom-color:rgba(225,222,230,.6); }
+html[data-theme="light"] .f-log-item { color:#8a8791; border-bottom-color:#eeecf1; }
+html[data-theme="light"] .f-log-item:hover { color:#2a2830; background:rgba(120,35,140,.05); }
+html[data-theme="light"] .f-log-item::before { background:#d9d6e0; }
+html[data-theme="light"] .f-log-item-sys { color:#c4c1cb; }
+html[data-theme="light"] .f-toggle-btn { color:#c4c1cb; }
+
+html[data-theme="light"] .cb { background:rgba(255,255,255,.7); }
+html[data-theme="light"] .cb-title { color:#221f28; }
+html[data-theme="light"] .cb-sub { color:#b8b5bf; }
+html[data-theme="light"] .cb-sort { border-color:#e2e0e6; }
+html[data-theme="light"] .vbtn { border-color:#e2e0e6; color:#c4c1cb; }
+html[data-theme="light"] .vbtn:hover { border-color:#b8b5bf; color:#726f79; }
+
+html[data-theme="light"] .sc-card:hover { box-shadow:0 4px 24px rgba(90,60,100,.12),0 0 16px var(--fc-glow, var(--accent-glow)); }
+html[data-theme="light"] .card-ttl { color:#211f26; }
+html[data-theme="light"] .ctag { background:#f4f3f6; border-color:#e6e4ea; color:#8a8791; }
+html[data-theme="light"] .ctag.pl { color:#78238C; }
+html[data-theme="light"] .card-foot { border-top-color:#eeecf1; }
+html[data-theme="light"] .card-date { color:#c4c1cb; }
+html[data-theme="light"] .card-sess { color:#a8a4b0; }
+html[data-theme="light"] .cact { background:#faf9fb; border-color:#e6e4ea; color:#a8a4b0; }
+html[data-theme="light"] .cact:hover { color:#333; border-color:#b8b5bf; }
+
+html[data-theme="light"] .empty-g { color:#eeecf1; }
+html[data-theme="light"] .empty-t { color:#c4c1cb; }
+
+html[data-theme="light"] .smsg-live { color:#e3e0e8; }
+html[data-theme="light"] .msg-ts { color:#d4d1db; }
+html[data-theme="light"] .msg-tx { color:#b0adb8; }
+html[data-theme="light"] .msg-tx.hi { color:#5a5762; }
+
+html[data-theme="light"] .dz { border-color:#e2e0e6; }
+html[data-theme="light"] .dz-t { color:#d4d1db; }
+html[data-theme="light"] .dz:hover .dz-t, html[data-theme="light"] .dz.over .dz-t { color:#5a2a68; }
+html[data-theme="light"] .dz-s { color:#d4d1db; }
+html[data-theme="light"] .dz:hover .dz-s, html[data-theme="light"] .dz.over .dz-s { color:#726f79; }
+html[data-theme="light"] #prog-wrap { background:#f1eff4; }
+html[data-theme="light"] #comp-badge { background:#faf9fb; border-color:#eeecf1; color:#c4c1cb; }
+html[data-theme="light"] .ustat-l { color:#c4c1cb; }
+html[data-theme="light"] .rec-item { border-bottom-color:#f0eef3; }
+html[data-theme="light"] .rec-item:hover { background:rgba(120,35,140,.045); }
+html[data-theme="light"] .rec-ttl { color:#726f79; }
+html[data-theme="light"] .rec-meta { color:#c4c1cb; }
+
+html[data-theme="light"] .modal-ov { background:rgba(40,30,45,.4); }
+html[data-theme="light"] .modal { background:#ffffff; box-shadow:0 0 60px rgba(60,40,70,.22),0 0 20px var(--accent-glow); }
+html[data-theme="light"] .modal-h { color:#211f26; }
+html[data-theme="light"] .modal-x { color:#c4c1cb; }
+html[data-theme="light"] .modal-x:hover { color:#211f26; }
+html[data-theme="light"] .mf input, html[data-theme="light"] .mf select { background:#fbfaf9; border-color:#e2e0e6; }
+html[data-theme="light"] .mf input::placeholder { color:#d4d1db; }
+
+html[data-theme="light"] .sp-tag { background:#f4f3f6; border-color:#e2e0e6; color:#a8a4b0; }
+html[data-theme="light"] .sp-tag:hover { color:#333; }
+html[data-theme="light"] .sp-tag-cnt { color:#c4c1cb; background:#eeecf1; }
+
+html[data-theme="light"] .color-swatch.picked { border-color:#211f26; }
+html[data-theme="light"] .color-custom-wrap input[type=color] { border-color:#e2e0e6; }
+html[data-theme="light"] .color-hex-input { background:#fbfaf9; border-color:#e2e0e6; color:#33313a; }
+html[data-theme="light"] .color-hex-input::placeholder { color:#d4d1db; }
+html[data-theme="light"] .color-custom-label { color:#a8a4b0; }
+
+html[data-theme="light"] .accent-live-preview { border-color:#e2e0e6; background:#faf9fb; }
+
+html[data-theme="light"] .cloud-plan { border-color:#eeecf1; }
+html[data-theme="light"] .cloud-plan:hover { border-color:#d9d6e0; background:rgba(40,30,45,.02); }
+html[data-theme="light"] .cloud-plan-h { color:#4a4750; }
+html[data-theme="light"] .cloud-plan-h .badge { background:#f4f3f6; border-color:#e6e4ea; color:#a8a4b0; }
+html[data-theme="light"] .cloud-plan-desc { color:#8a8791; }
+html[data-theme="light"] .cloud-plan.selected .cloud-plan-desc { color:#6a6772; }
+html[data-theme="light"] .cloud-step { background:#faf9fb; border-color:#f0eef3; }
+html[data-theme="light"] .cloud-step-body { color:#726f79; }
+html[data-theme="light"] .cloud-status { border-color:#f0eef3; }
+html[data-theme="light"] .cloud-dot { background:#e2e0e6; }
+html[data-theme="light"] .cloud-status-text { color:#a8a4b0; }
+html[data-theme="light"] .share-link-box { background:#faf9fb; border-color:#e2e0e6; }
+
+html[data-theme="light"] #export-overlay { background:rgba(255,255,255,.94); }
+html[data-theme="light"] .exp-lbl { color:#211f26; }
+html[data-theme="light"] .exp-bar-wrap { background:#eeecf1; }
+html[data-theme="light"] .exp-sub { color:#a8a4b0; }
+
+html[data-theme="light"] #toast { background:#ffffff; box-shadow:0 0 20px rgba(60,40,70,.14),0 0 10px var(--accent-glow); }
+html[data-theme="light"] .toast-t { color:#333; }
+
+html[data-theme="light"] #bottom-nav { background:rgba(255,255,255,.97); }
+html[data-theme="light"] #deco { color:#efeef2; }
+html[data-theme="light"] #sb-overlay { background:rgba(40,30,45,.35); }
+
+/* theme toggle (in accent modal) */
+.theme-toggle-row { display:flex; gap:7px; margin-top:7px; }
+.theme-opt {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+  font-family:'Montserrat'; font-weight:700; font-size:.6rem; letter-spacing:.1em;
+  padding:9px 8px; background:transparent; border:1px solid #2a2a2a; border-radius:2px;
+  color:#666; cursor:pointer; transition:all .2s;
+}
+.theme-opt:hover { border-color:#555; color:#ccc; }
+.theme-opt.on { border-color:var(--accent); color:#e0b4f0; background:var(--accent-dim); }
+html[data-theme="light"] .theme-opt { border-color:#dedbe2; color:#8a8791; }
+html[data-theme="light"] .theme-opt:hover { border-color:#a8a4b0; color:#333; }
+html[data-theme="light"] .theme-opt.on { color:#5a2a68; }
+
+/* favorite / duplicate warning */
+.card-fav-btn { position:absolute; top:5px; left:5px; background:none; border:none; color:#3e3e3e; cursor:pointer; padding:3px; display:flex; opacity:0; transition:opacity .2s,color .2s; z-index:2; }
+.sc-card:hover .card-fav-btn, .card-fav-btn.on { opacity:1; }
+.card-fav-btn.on { color:#d4a017; }
+.card-fav-btn:hover { color:#e6b820; }
+.cgrid.list .card-fav-btn { position:static; opacity:1; margin-right:2px; }
+.dup-warn { display:flex; align-items:flex-start; gap:8px; padding:10px 12px; margin-bottom:14px; background:rgba(110,90,26,.14); border:1px solid var(--warn); border-radius:2px; font-size:.72rem; color:#d4b13a; line-height:1.6; }
+.dup-warn-ico { flex-shrink:0; }
+html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d1a; }
 </style>
 </head>
 <body>
@@ -616,6 +787,11 @@ body::after {
         <span style="flex:1;text-align:left">すべてのログ</span>
         <span class="f-cnt" id="cnt-all">0</span>
       </button>
+      <button class="f-row" id="f-fav" onclick="setFolder('FAV',this)" aria-label="お気に入り">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 .8l1.5 3.3 3.6.4-2.7 2.5.7 3.6L6 8.8 2.9 10.6l.7-3.6L.9 4.5l3.6-.4z" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/></svg>
+        <span style="flex:1;text-align:left">お気に入り</span>
+        <span class="f-cnt" id="cnt-fav">0</span>
+      </button>
     </div>
     <div class="sb-sec grow">
       <div class="sb-head">
@@ -644,6 +820,7 @@ body::after {
         </button>
       </div>
       <select class="cb-sort" id="sort" onchange="renderCards()">
+        <option value="fav_first">お気に入り優先</option>
         <option value="sess_a">セッション数↑</option>
         <option value="sess_d">セッション数↓</option>
         <option value="date_d">最終更新↓</option>
@@ -706,6 +883,10 @@ body::after {
   <div class="modal">
     <button class="modal-x" onclick="closeModal('import-modal')">✕</button>
     <div class="modal-h">LOG IMPORT</div>
+    <div class="dup-warn" id="dup-warn" style="display:none;">
+      <span class="dup-warn-ico">⚠</span>
+      <span id="dup-warn-text"></span>
+    </div>
     <div class="mf"><label>SCENARIO TITLE</label><input id="imp-title" placeholder="（HTMLから自動取得）" autocomplete="off"></div>
     <div class="mf"><label>SYSTEM</label>
       <select id="imp-sys">
@@ -775,7 +956,7 @@ body::after {
       <div class="color-custom-wrap">
         <input type="color" id="fld-color-custom" value="#78238C" oninput="onCustomColor(this.value)">
         <span class="color-custom-label">カスタムカラー</span>
-        <span id="fld-color-hex" style="font-family:'Montserrat';font-size:.52rem;color:#555;">#78238C</span>
+        <input type="text" id="fld-color-hex" class="color-hex-input" value="#78238C" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB" oninput="onCustomColorText(this.value)" onblur="onCustomColorTextBlur()">
       </div>
     </div>
     <p style="font-size:.72rem;color:#3a3a3a;line-height:1.7;margin-top:4px;">
@@ -884,7 +1065,21 @@ body::after {
       <label>カスタムカラー</label>
       <div class="color-custom-wrap">
         <input type="color" id="accent-color-custom" oninput="onAccentCustomColor(this.value)">
-        <span class="color-custom-label" id="accent-color-hex">#78238C</span>
+        <span class="color-custom-label">カスタムカラー</span>
+        <input type="text" id="accent-color-hex" class="color-hex-input" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB" oninput="onAccentCustomColorText(this.value)" onblur="onAccentCustomColorTextBlur()">
+      </div>
+    </div>
+    <div class="mf">
+      <label>テーマ</label>
+      <div class="theme-toggle-row">
+        <button type="button" class="theme-opt" id="theme-opt-dark" onclick="setThemeChoice('dark')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          DARK
+        </button>
+        <button type="button" class="theme-opt" id="theme-opt-light" onclick="setThemeChoice('light')">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2.6" stroke="currentColor" stroke-width="1.1"/><path d="M6 .8v1.4M6 9.8v1.4M11.2 6h-1.4M2.2 6H.8M9.5 2.5l-1 1M3.5 8.5l-1 1M9.5 9.5l-1-1M3.5 3.5l-1-1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          LIGHT
+        </button>
       </div>
     </div>
     <div class="modal-act">
@@ -973,7 +1168,7 @@ async function decompress(s){
 ══════════════════════════════════════════════ */
 const META_KEY = 'trpg_meta_v4';
 let S={folders:[],logs:[],sysFilter:'ALL',folderFilter:'ALL',view:'grid'};
-let pendingHTML=null,pendingFile=null;
+let pendingHTML=null,pendingFile=null,pendingHash=null;
 let totalOrig=0,totalSaved=0;
 let fbConnected=false;
 
@@ -1025,7 +1220,7 @@ function initColorPicker() {
          title="${c}"></div>`
   ).join('');
   document.getElementById('fld-color-custom').value = _pickedColor;
-  document.getElementById('fld-color-hex').textContent = _pickedColor;
+  document.getElementById('fld-color-hex').value = _pickedColor;
 }
 
 function pickColor(color, el) {
@@ -1033,13 +1228,33 @@ function pickColor(color, el) {
   document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('picked'));
   if (el) el.classList.add('picked');
   document.getElementById('fld-color-custom').value = color;
-  document.getElementById('fld-color-hex').textContent = color;
+  document.getElementById('fld-color-hex').value = color;
 }
 
 function onCustomColor(val) {
   _pickedColor = val;
-  document.getElementById('fld-color-hex').textContent = val;
+  document.getElementById('fld-color-hex').value = val;
   document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('picked'));
+}
+
+/* HEX コードを直接入力 — 入力中は逐次反映、確定時（blur）に正規化 */
+function normalizeHex(v){
+  v=(v||'').trim();
+  if(!v)return null;
+  if(!v.startsWith('#'))v='#'+v;
+  return /^#[0-9a-fA-F]{6}$/.test(v) ? '#'+v.slice(1).toLowerCase() : null;
+}
+function onCustomColorText(val){
+  const hex=normalizeHex(val);
+  if(!hex)return;
+  _pickedColor=hex;
+  document.getElementById('fld-color-custom').value=hex;
+  document.querySelectorAll('#fld-color-swatches .color-swatch').forEach(s=>s.classList.remove('picked'));
+}
+function onCustomColorTextBlur(){
+  const input=document.getElementById('fld-color-hex');
+  const hex=normalizeHex(input.value);
+  input.value = hex || _pickedColor;
 }
 
 /* フォルダごとの展開状態を保持 */
@@ -1056,6 +1271,7 @@ function toggleFolderLogs(e, fid) {
 
 function renderFolders(){
   document.getElementById('cnt-all').textContent=S.logs.length;
+  document.getElementById('cnt-fav').textContent=S.logs.filter(l=>l.favorite).length;
   document.getElementById('folder-tree').innerHTML=S.folders.map(f=>{
     const logs=S.logs.filter(l=>l.folder===f.id);
     const cnt=logs.length;
@@ -1103,11 +1319,12 @@ function renderCards(){
   const sort=document.getElementById('sort').value;
   let logs=S.logs.filter(l=>{
     const sOk=S.sysFilter==='ALL'||l.system===S.sysFilter;
-    const fOk=S.folderFilter==='ALL'||l.folder===S.folderFilter;
+    const fOk=S.folderFilter==='ALL'?true:S.folderFilter==='FAV'?!!l.favorite:l.folder===S.folderFilter;
     const qOk=!q||l.title.toLowerCase().includes(q)||(l.pl||'').toLowerCase().includes(q)||l.system.toLowerCase().includes(q);
     return sOk&&fOk&&qOk;
   });
   logs.sort((a,b)=>{
+    if(sort==='fav_first'){ if(!!a.favorite!==!!b.favorite)return(b.favorite?1:0)-(a.favorite?1:0); return new Date(b.date)-new Date(a.date); }
     if(sort==='date_d')return new Date(b.date)-new Date(a.date);
     if(sort==='date_a')return new Date(a.date)-new Date(b.date);
     if(sort==='title')return a.title.localeCompare(b.title,'ja');
@@ -1115,7 +1332,7 @@ function renderCards(){
     if(sort==='sess_a')return a.sessions-b.sessions;
     return 0;
   });
-  const fname=S.folderFilter==='ALL'?'ALL LOGS':(S.folders.find(f=>f.id===S.folderFilter)?.name||'?');
+  const fname=S.folderFilter==='ALL'?'ALL LOGS':S.folderFilter==='FAV'?'お気に入り':(S.folders.find(f=>f.id===S.folderFilter)?.name||'?');
   document.getElementById('cb-title').textContent=fname;
   document.getElementById('cb-sub').textContent=`${logs.length} LOG${logs.length!==1?'S':''}`;
   if(!logs.length){grid.innerHTML=`<div class="empty"><div class="empty-g">∅</div><div class="empty-t">NO LOGS FOUND<br>IMPORT A LOG FILE TO BEGIN</div></div>`;return;}
@@ -1126,8 +1343,12 @@ function renderCards(){
     const fc = folderColorMap[l.folder] || 'var(--accent)';
     const fcGlow = l.folder && folderColorMap[l.folder]
       ? hexToRgba(folderColorMap[l.folder], 0.35) : 'var(--accent-glow)';
+    const favIcon = l.favorite
+      ? `<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 .8l1.5 3.3 3.6.4-2.7 2.5.7 3.6L6 8.8 2.9 10.6l.7-3.6L.9 4.5l3.6-.4z"/></svg>`
+      : `<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 .8l1.5 3.3 3.6.4-2.7 2.5.7 3.6L6 8.8 2.9 10.6l.7-3.6L.9 4.5l3.6-.4z" stroke-linejoin="round"/></svg>`;
     return`<div class="sc-card" role="listitem" tabindex="0" onclick="openLog('${l.id}')" onkeydown="if(event.key==='Enter')openLog('${l.id}')" style="animation-delay:${Math.min(i,8)*.038}s;--fc:${fc};--fc-glow:${fcGlow}" aria-label="${escH(l.title)}">
       <div class="card-bar" style="background:linear-gradient(90deg,${fc},transparent)"></div>
+      <button class="card-fav-btn${l.favorite?' on':''}" onclick="toggleFavorite(event,'${l.id}')" title="お気に入り" aria-label="お気に入り登録/解除">${favIcon}</button>
       <div class="card-body">
         <div class="card-sys" style="color:${fc}">${escH(l.system)}</div>
         <div class="card-ttl">${escH(l.title)}</div>
@@ -1209,6 +1430,32 @@ function extractSpeakerFrequency(doc) {
   return [...freq.entries()].sort((a, b) => b[1] - a[1]);
 }
 
+/* ── 重複検出 ──
+   ログ本文の簡易ハッシュ + 長さでほぼ一意に識別する。
+   完全一致（同一ファイルの再インポート）とタイトル重複の両方を検出する。 */
+function quickHash(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){h=(h<<5)-h+str.charCodeAt(i);h|=0;}
+  return (h>>>0).toString(16)+'_'+str.length;
+}
+function checkDuplicate(title, hash){
+  const el=document.getElementById('dup-warn'), txt=document.getElementById('dup-warn-text');
+  if(!el||!txt)return;
+  const byHash = hash ? S.logs.find(l=>l.hash && l.hash===hash) : null;
+  const byTitle = !byHash ? S.logs.find(l=>l.title===title) : null;
+  if(byHash){
+    txt.innerHTML=`内容が完全に一致するログが既に登録されています:「${escH(byHash.title)}」。誤って再インポートしていないか確認してください。`;
+    el.style.display='flex';
+    sysMsg('warn',`重複検出（内容一致）: "${byHash.title}"`);
+  }else if(byTitle){
+    txt.innerHTML=`同じタイトルのログが既に存在します:「${escH(byTitle.title)}」。別セッションのログであれば問題ありません。`;
+    el.style.display='flex';
+    sysMsg('warn',`重複検出（タイトル一致）: "${byTitle.title}"`);
+  }else{
+    el.style.display='none';
+  }
+}
+
 function handleFiles(f){if(f.length)processFile(f[0]);}
 function processFile(file){
   if(!file.name.toLowerCase().endsWith('.html')){sysMsg('err','非対応: '+file.name);return;}
@@ -1232,6 +1479,8 @@ function processFile(file){
     sysMsg('info', `発言者 ${speakers.length}名を検出`);
 
     pendingHTML=html;
+    pendingHash=quickHash(html);
+    checkDuplicate(title, pendingHash);
     document.getElementById('imp-title').value=title;
     document.getElementById('imp-sys').value=sys;
     document.getElementById('imp-pl').value='';
@@ -1340,7 +1589,8 @@ function openModal(id){renderFolders();document.getElementById(id).classList.add
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
   if(id==='import-modal'){
-    pendingHTML=null; pendingFile=null;
+    pendingHTML=null; pendingFile=null; pendingHash=null;
+    const dw=document.getElementById('dup-warn'); if(dw) dw.style.display='none';
     /* サジェストタグをリセット */
     const sg = document.getElementById('imp-pl-suggestions');
     if(sg) sg.innerHTML='';
@@ -1668,6 +1918,8 @@ async function confirmImport(){
     folder: document.getElementById('imp-folder').value,
     date:   new Date().toISOString().split('T')[0],
     filename: pendingFile?.name||'(manual)',
+    hash: pendingHash||null,
+    favorite: false,
   };
   try{
     /* HTMLのサイズを記録 */
@@ -1731,6 +1983,13 @@ async function deleteFolder(e,id){
   S.folders=S.folders.filter(x=>x.id!==id);
   S.logs.forEach(l=>{if(l.folder===id)l.folder='';});
   saveMeta();renderAll();sysMsg('ok',`フォルダ削除: "${f.name}"`);toast(`「${f.name}」を削除しました`);
+}
+function toggleFavorite(e,id){
+  e.stopPropagation();
+  const log=S.logs.find(l=>l.id===id);if(!log)return;
+  log.favorite=!log.favorite;
+  saveMeta();renderAll();
+  toast(log.favorite?`「${log.title}」をお気に入りに追加`:`「${log.title}」をお気に入りから解除`);
 }
 async function deleteLog(e,id){
   e.stopPropagation();
@@ -2076,6 +2335,45 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ══════════════════════════════════════════════
+   THEME — ライト/ダークモード
+══════════════════════════════════════════════ */
+const THEME_STORAGE_KEY = 'trpg-archive-theme';
+
+function loadTheme(){
+  let theme = localStorage.getItem(THEME_STORAGE_KEY);
+  if(!theme){
+    // 保存済み設定が無ければOSの設定に合わせる
+    theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+  }
+  applyTheme(theme, false);
+}
+
+function applyTheme(theme, save=true){
+  if(theme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  if(save) localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+function toggleTheme(){
+  const isLight = document.documentElement.getAttribute('data-theme')==='light';
+  const next = isLight ? 'dark' : 'light';
+  applyTheme(next, true);
+  toast(next==='light' ? 'ライトモードに切替' : 'ダークモードに切替');
+}
+
+function setThemeChoice(theme){
+  applyTheme(theme, true);
+  syncThemeToggleUI();
+  toast(theme==='light' ? 'ライトモードに切替' : 'ダークモードに切替');
+}
+
+function syncThemeToggleUI(){
+  const isLight = document.documentElement.getAttribute('data-theme')==='light';
+  document.getElementById('theme-opt-dark')?.classList.toggle('on', !isLight);
+  document.getElementById('theme-opt-light')?.classList.toggle('on', isLight);
+}
+
+/* ══════════════════════════════════════════════
    ACCENT COLOR — ツール全体のアクセントカラー設定
 ══════════════════════════════════════════════ */
 const ACCENT_PRESETS = [
@@ -2115,8 +2413,9 @@ function openAccentModal(){
          style="background:${c}" onclick="pickAccentColor('${c}',this)" title="${c}"></div>`
   ).join('');
   document.getElementById('accent-color-custom').value = _accentPicked;
-  document.getElementById('accent-color-hex').textContent = _accentPicked;
+  document.getElementById('accent-color-hex').value = _accentPicked;
   updateAccentPreview(_accentPicked);
+  syncThemeToggleUI();
   document.getElementById('accent-modal').classList.add('open');
 }
 
@@ -2125,15 +2424,30 @@ function pickAccentColor(color, el){
   document.querySelectorAll('#accent-swatch-row .color-swatch').forEach(s=>s.classList.remove('picked'));
   if(el) el.classList.add('picked');
   document.getElementById('accent-color-custom').value = color;
-  document.getElementById('accent-color-hex').textContent = color;
+  document.getElementById('accent-color-hex').value = color;
   updateAccentPreview(color);
 }
 
 function onAccentCustomColor(val){
   _accentPicked = val;
-  document.getElementById('accent-color-hex').textContent = val;
+  document.getElementById('accent-color-hex').value = val;
   document.querySelectorAll('#accent-swatch-row .color-swatch').forEach(s=>s.classList.remove('picked'));
   updateAccentPreview(val);
+}
+
+/* HEX コードを直接入力 */
+function onAccentCustomColorText(val){
+  const hex=normalizeHex(val);
+  if(!hex)return;
+  _accentPicked=hex;
+  document.getElementById('accent-color-custom').value=hex;
+  document.querySelectorAll('#accent-swatch-row .color-swatch').forEach(s=>s.classList.remove('picked'));
+  updateAccentPreview(hex);
+}
+function onAccentCustomColorTextBlur(){
+  const input=document.getElementById('accent-color-hex');
+  const hex=normalizeHex(input.value);
+  input.value = hex || _accentPicked;
 }
 
 function updateAccentPreview(color){
@@ -2157,6 +2471,7 @@ function applyAccentColor(){
 ══════════════════════════════════════════════ */
 async function init(){
   sysMsg('sys','TRPG ARCHIVE PORTAL — 起動中…');
+  loadTheme();
   loadAccentColor();
   try{await initDB();sysMsg('ok','IndexedDB 初期化完了');}catch(e){sysMsg('err','IDB失敗: '+e.message);}
   sysMsg('sys',CAN_COMPRESS?'gzip圧縮: 有効':'gzip圧縮: 非対応');
