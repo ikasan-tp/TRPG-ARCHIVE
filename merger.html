@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOGMERGER</title>
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c084f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2'/></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@700;900&display=block" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-dark: #1a1a1a;
+    --card-bg: #222222;
+    --ui-border: #444444;
+    --accent: #C5373C;
+    --text-main: #dbdee1;
+    --text-sub: #b5bac1;
+  }
+
+  .material-symbols-outlined {
+    display: inline-block; width: 1em; height: 1em;
+    overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    max-width: 800px; margin: 0 auto; padding: 80px 15px 60px;
+    background-color: var(--bg-dark); color: var(--text-main);
+    min-height: 100vh; box-sizing: border-box; position: relative;
+  }
+
+  .back-link {
+    position: absolute; top: 30px; left: 20px;
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--text-sub);
+    font-family: 'Montserrat', sans-serif; font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.1em; transition: 0.3s; z-index: 1000;
+  }
+  .back-link:hover { color: var(--accent); transform: translateX(-5px); }
+
+  .card {
+    background: var(--card-bg); padding: 24px 28px;
+    border-radius: 12px; border: 1px solid var(--ui-border); margin-bottom: 12px;
+  }
+
+  .ui-header { margin-bottom: 16px; border-bottom: 3px solid var(--accent); padding-bottom: 12px; }
+  .ui-brand { font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 900; color: var(--accent); letter-spacing: 0.4em; display: block; margin-bottom: 2px; }
+  .ui-title { font-family: 'Montserrat', 'Noto Sans JP', sans-serif; font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: 0.05em; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .ui-title-sub { color: var(--text-sub); font-size: 0.8rem; font-weight: 400; letter-spacing: 0.1em; }
+
+  .privacy-note { font-size: 0.75em; color: var(--text-sub); margin-bottom: 16px; }
+
+  .drop-zone {
+    border: 2px dashed #4f545c; padding: 32px 20px;
+    border-radius: 8px; background: #2a2a2a;
+    cursor: pointer; text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: #2e2020; }
+  .drop-zone-icon { font-size: 2.4rem !important; width: 2.4rem !important; height: 2.4rem !important; color: var(--accent); display: block; margin: 0 auto 8px; }
+  .drop-zone p { margin: 0; font-size: 0.82rem; color: var(--text-sub); }
+  .drop-zone-link { color: var(--accent); text-decoration: underline; font-weight: bold; }
+
+  .file-list { margin: 16px 0; display: flex; flex-direction: column; gap: 8px; }
+  .file-list-empty { text-align: center; color: var(--text-sub); font-size: 0.78em; padding: 20px; opacity: 0.5; }
+
+  .file-item {
+    background: #181818; padding: 10px 14px; border-radius: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-left: 3px solid var(--accent); gap: 12px;
+  }
+  .file-item-order { display: flex; flex-direction: column; flex-shrink: 0; }
+  .file-item-info { flex: 1; min-width: 0; }
+  .file-name { font-size: 0.82em; color: #fff; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .file-anchors { font-size: 0.68em; color: #555; margin-top: 2px; }
+
+  .icon-btn {
+    background: transparent; color: #555; border: none; cursor: pointer; padding: 2px;
+    display: flex; align-items: center; justify-content: center; transition: color 0.15s;
+  }
+  .icon-btn:hover:not(:disabled) { color: #ccc; }
+  .icon-btn:disabled { opacity: 0.15; cursor: default; }
+  .remove-btn:hover { color: #ff5252 !important; }
+  .icon-btn .material-symbols-outlined { font-size: 18px !important; width: 18px !important; height: 18px !important; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 13px; font-size: 0.9rem; cursor: pointer;
+    background-color: var(--accent); color: white; border: none; border-radius: 4px;
+    font-weight: 900; transition: 0.2s; margin-top: 14px;
+    font-family: 'Montserrat', sans-serif; letter-spacing: 0.12em; box-sizing: border-box;
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+  .btn:disabled { background: #2a2a2a; border: 1px solid #333; cursor: not-allowed; color: #555; transform: none; filter: none; }
+  .btn .material-symbols-outlined { font-size: 1.1rem !important; width: 1.1rem !important; height: 1.1rem !important; }
+
+  #status { margin-top: 10px; font-size: 0.82em; color: var(--text-sub); text-align: center; min-height: 1.3em; }
+
+  /* TRPG ARCHIVE skin: UI only. Merged log output is untouched. */
+  :root {
+    --bg-dark: #020202;
+    --card-bg: #050505;
+    --ui-border: #1e1e1e;
+    --ui-input: #030303;
+    --accent: #78238C;
+    --accent-dim: rgba(120,35,140,.13);
+    --accent-glow: rgba(120,35,140,.35);
+    --text-main: #d8d8d8;
+    --text-sub: #727272;
+  }
+  body {
+    max-width: 860px;
+    background: #000;
+    color: var(--text-main);
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.04) 3px, rgba(0,0,0,.04) 4px);
+    pointer-events: none;
+    z-index: 9998;
+  }
+  .back-link {
+    color: #555;
+    font-size: .68rem;
+    text-transform: uppercase;
+  }
+  .back-link:hover {
+    color: #e0b4f0;
+  }
+  .card {
+    background: var(--card-bg);
+    border-color: var(--ui-border);
+    border-top: 2px solid var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 35px rgba(0,0,0,.45);
+  }
+  .ui-header {
+    border-bottom: 1px solid var(--ui-border);
+    padding-bottom: 16px;
+  }
+  .ui-brand {
+    color: var(--accent);
+    letter-spacing: .32em;
+  }
+  .ui-title {
+    color: #fff;
+    letter-spacing: .12em;
+  }
+  .ui-title-sub {
+    color: #777;
+    font-size: .68rem;
+    letter-spacing: .16em;
+  }
+  .privacy-note {
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+  .drop-zone {
+    background: #060606;
+    border: 1px dashed #242424;
+    border-radius: 2px;
+    padding: 32px 20px;
+  }
+  .drop-zone:hover,
+  .drop-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+  .drop-zone-icon,
+  .drop-zone-link {
+    color: #d9a5ea;
+  }
+  .drop-zone-link {
+    text-decoration: none;
+    font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+    letter-spacing: .08em;
+  }
+  .file-list {
+    gap: 7px;
+  }
+  .file-list-empty {
+    color: #555;
+    background: #030303;
+    border: 1px solid #151515;
+    border-radius: 2px;
+  }
+  .file-item {
+    background: #060606;
+    border: 1px solid var(--ui-border);
+    border-left: 3px solid var(--accent);
+    border-radius: 2px;
+  }
+  .file-name {
+    color: #ddd;
+  }
+  .file-anchors {
+    color: #585858;
+    font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+    letter-spacing: .05em;
+  }
+  .icon-btn {
+    color: #555;
+    border-radius: 2px;
+  }
+  .icon-btn:hover:not(:disabled) {
+    color: #e0b4f0;
+    background: var(--accent-dim);
+  }
+  .remove-btn:hover {
+    color: #ff8a8a !important;
+  }
+  .btn {
+    background: var(--accent);
+    border-radius: 2px;
+    min-height: 42px;
+    box-shadow: 0 0 18px rgba(120,35,140,.18);
+  }
+  .btn:hover:not(:disabled) {
+    filter: none;
+    background: #9b2fbe;
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+  .btn:disabled {
+    background: #111;
+    border: 1px solid #1d1d1d;
+    color: #3a3a3a;
+  }
+  #status {
+    color: #777;
+    font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+    letter-spacing: .04em;
+  }
+
+  @media screen and (max-width: 600px) {
+    body { padding: 60px 12px 60px; }
+    .card { padding: 18px 14px; }
+    .back-link { top: 10px; left: 10px; }
+    .file-name { font-size: 0.75em; }
+  }
+</style>
+</head>
+<body>
+
+  <a href="generator.html" class="back-link">
+    <span class="material-symbols-outlined" style="font-size: 0.9rem;">arrow_back_ios</span>
+    BACK TO LOG EDITOR
+  </a>
+
+  <div class="card">
+    <div class="ui-header">
+      <span class="ui-brand">TRPG LOG ARCHIVE</span>
+      <div class="ui-title">LOG MERGER <span class="ui-title-sub">for HTML LOG</span></div>
+    </div>
+
+    <p class="privacy-note">分割されたログを好きな順番で一本に結合します。目次・見出しはすべて維持されます。</p>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <span class="material-symbols-outlined drop-zone-icon">library_add</span>
+      <p>HTMLログをドロップするか<br><span class="drop-zone-link">ファイルを選択</span></p>
+      <input type="file" id="fileInput" multiple accept=".html" style="display:none" onchange="addFiles(event)">
+    </div>
+
+    <div id="fileList" class="file-list">
+      <p class="file-list-empty">ファイルが追加されていません</p>
+    </div>
+
+    <button id="mergeBtn" class="btn" onclick="mergeHtmlLogs()" disabled>
+      <span class="material-symbols-outlined">merge</span>
+      ログを結合して保存
+    </button>
+    <div id="status"></div>
+  </div>
+
+  <div style="position: fixed; bottom: 10px; right: 15px; font-family: sans-serif; font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 0.1em; font-weight: bold; pointer-events: none; z-index: 9999;">✦ TRPGLOGARCHIVE</div>
+
+  <script>
+    let filesData = [];
+
+    const dz = document.getElementById('dropZone');
+    dz.addEventListener('dragover',  (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', (e) => { e.preventDefault(); dz.classList.remove('dragover'); });
+    dz.addEventListener('drop',      (e) => { e.preventDefault(); dz.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+    function addFiles(e) { handleFiles(e.target.files); e.target.value = ''; }
+
+    async function handleFiles(files) {
+      for (const file of Array.from(files)) {
+        if (!file.name.endsWith('.html')) continue;
+        const text = await file.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+
+        // generator.html出力の構造から必要な情報を抽出
+        const headHTML    = doc.head.innerHTML;
+        const heroArea    = doc.querySelector('.hero-title-area');
+        const container   = doc.querySelector('.container');
+        const indexLinks  = doc.querySelectorAll('#index-list .index-link');
+
+        // <head>からスタイルだけ取り出す（font/cssリンクは重複させない）
+        const styleEl = doc.querySelector('head style');
+        const inlineStyle = styleEl ? styleEl.outerHTML : '';
+
+        // 目次エントリを [{text, href}] として保持
+        const anchors = Array.from(indexLinks).map(a => ({
+          text: a.textContent.trim(),
+          href: a.getAttribute('href') // "#log-0" などの形式
+        }));
+
+        // セッションタイトル
+        const heroTitle = heroArea ? heroArea.outerHTML : '';
+        // 目次セクションの見出しに使うタイトルテキスト
+const heroTitleText = heroArea
+  ? (heroArea.querySelector('.hero-title')?.textContent.trim() || file.name.replace('.html',''))
+  : file.name.replace('.html','');
+        // コンテンツ本体（.containerの中身）
+        const contentHTML = container ? container.innerHTML : doc.body.innerHTML;
+
+        filesData.push({
+          name: file.name,
+          headHTML,
+          inlineStyle,
+          heroTitle,
+          heroTitleText,
+          contentHTML,
+          anchors
+        });
+      }
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      const btn  = document.getElementById('mergeBtn');
+
+      if (filesData.length === 0) {
+        list.innerHTML = '<p class="file-list-empty">ファイルが追加されていません</p>';
+        btn.disabled = true;
+        return;
+      }
+
+      list.innerHTML = '';
+      filesData.forEach((f, i) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="file-item-order">
+              <button class="icon-btn" ${i === 0 ? 'disabled' : ''} data-swap-a="${i}" data-swap-b="${i-1}">
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
+              <button class="icon-btn" ${i === filesData.length - 1 ? 'disabled' : ''} data-swap-a="${i}" data-swap-b="${i+1}">
+                <span class="material-symbols-outlined">expand_more</span>
+              </button>
+            </div>
+            <div class="file-item-info">
+              <span class="file-name">${i + 1}. ${f.name}</span>
+              <div class="file-anchors">目次エントリ: ${f.anchors.length}件</div>
+            </div>
+          </div>
+          <button class="icon-btn remove-btn" data-remove="${i}">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        `;
+        list.appendChild(item);
+      });
+
+      // イベント委譲でボタン処理（インラインonclickを避ける安全な方式）
+      list.querySelectorAll('[data-swap-a]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          swapFile(parseInt(btn.dataset.swapA), parseInt(btn.dataset.swapB));
+        });
+      });
+      list.querySelectorAll('[data-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          removeFile(parseInt(btn.dataset.remove));
+        });
+      });
+
+      btn.disabled = filesData.length < 2;
+    }
+
+    function swapFile(idx1, idx2) {
+      if (idx2 < 0 || idx2 >= filesData.length) return;
+      [filesData[idx1], filesData[idx2]] = [filesData[idx2], filesData[idx1]];
+      renderFileList();
+    }
+
+    function removeFile(i) {
+      filesData.splice(i, 1);
+      renderFileList();
+    }
+
+    function mergeHtmlLogs() {
+      if (filesData.length < 2) return;
+
+      // ベースのスタイル（最初のファイルから）
+      const baseHead = filesData[0].headHTML;
+
+      // 全ファイルの目次を結合（ファイルごとにIDプレフィックスを付けてアンカー衝突を防ぐ）
+      let allIndexLinks = '';
+      filesData.forEach((f, fi) => {
+        if (f.anchors.length === 0) return;
+        // ファイル名をセクション区切りとして表示
+        allIndexLinks += `<div style="font-family:'Montserrat';font-size:0.55rem;font-weight:900;color:#C5373C;letter-spacing:0.3em;padding:15px 20px 5px;opacity:0.8;">${f.heroTitleText}</div>`;
+        f.anchors.forEach(anchor => {
+          // href例: "#log-5" → "#f0-log-5"（ファイルインデックスのプレフィックスを付ける）
+          const newHref = anchor.href.replace('#', `#f${fi}-`);
+          allIndexLinks += `<a href="${newHref}" class="index-link" onclick="closeMenu()">${anchor.text}</a>`;
+        });
+      });
+
+      // 各ファイルのコンテンツ本体（IDにファイルインデックスのプレフィックスを付けてアンカー衝突を防ぐ）
+      let mergedSections = '';
+      const sep = '<hr style="border:0; border-top:2px solid #1a1a1a; margin:0; clear:both;">';
+
+      filesData.forEach((f, fi) => {
+        // タイトルは最初のファイルのみ表示
+        let sectionHtml = (fi === 0) ? f.heroTitle : '';
+
+        // コンテンツ内の id="log-N" を id="fN-log-N" に書き換えてID衝突を防ぐ
+        let content = f.contentHTML;
+        content = content.replace(/\bid="log-(\d+)"/g, `id="f${fi}-log-$1"`);
+        // hero-title-areaがcontainer内に残っていれば除去（重複防止）
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        const innerHero = tempDiv.querySelector('.hero-title-area');
+        if (innerHero) innerHero.remove();
+        content = tempDiv.innerHTML;
+
+        sectionHtml += content;
+        mergedSections += sectionHtml;
+        if (fi < filesData.length - 1) mergedSections += sep;
+      });
+
+      const fullHtml = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  ${baseHead}
+</head>
+<body>
+
+  <input id="nav-input" type="checkbox" class="nav-uncheck">
+  <label for="nav-input" class="nav-overlay"></label>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-title">SESSION LOG</div>
+      <label for="nav-input" class="nav-open"><span></span></label>
+    </div>
+  </header>
+
+  <div class="nav-content">
+    <div class="nav-section">
+      <span class="nav-label">FILTER</span>
+      <div id="filter-container">
+        <button class="filter-btn active" onclick="toggleTab('style-default', this)">MAIN</button>
+        <button class="filter-btn active" onclick="toggleTab('style-info', this)">INFO</button>
+        <button class="filter-btn active" onclick="toggleTab('style-secret', this)">SECRET</button>
+        <button class="filter-btn active" onclick="toggleTab('style-chat', this)">CHAT</button>
+      </div>
+    </div>
+    <div class="nav-section" style="border:none;">
+      <span class="nav-label">INDEX</span>
+      <div id="index-list">
+        ${allIndexLinks}
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    ${mergedSections}
+  </div>
+
+  <footer>✦ TRPGLOGARCHIVE</footer>
+
+  <script>
+    function closeMenu() {
+      document.getElementById('nav-input').checked = false;
+    }
+    function toggleTab(styleClass, btn) {
+      btn.classList.toggle('active');
+      const isVisible = btn.classList.contains('active');
+      const container = document.querySelector('.container');
+      if (container) {
+        if (isVisible) container.classList.remove('hide-' + styleClass);
+        else container.classList.add('hide-' + styleClass);
+      }
+    }
+  <\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([fullHtml], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filesData[0].name;
+      a.click();
+      document.getElementById('status').innerText = '結合完了！ 🦑';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IKATOOLBOX | LOG EDITOR</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦑</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Montserrat:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #1a1a1a;
+            --card-bg: #222222;
+            --ui-input: #111111;
+            --ui-border: #444444;
+            --accent: #C5373C;
+            --text-main: #dbdee1;
+            --text-sub: #b5bac1;
+            --selection-bg: rgba(197, 55, 60, 0.15);
+            --sidebar-width: 400px;
+        }
+
+        .material-symbols-outlined { vertical-align: middle; font-size: 1.1rem; }
+        body { background: var(--bg-dark); color: var(--text-main); margin: 0; display: flex; font-family: 'Noto Sans JP', 'Montserrat', sans-serif; height: 100vh; overflow: hidden; }
+
+        .sidebar { width: var(--sidebar-width); background: var(--card-bg); border-right: 1px solid var(--ui-border); display: flex; flex-direction: column; transition: transform 0.3s ease-out; z-index: 1000; }
+        .sidebar-scroll { flex: 1; overflow-y: auto; padding: 20px 18px; scrollbar-width: thin; scrollbar-color: #444 transparent; }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+        .sidebar-footer { padding: 16px 18px; border-top: 1px solid var(--ui-border); background: var(--card-bg); }
+
+        .back-link { display: flex; align-items: center; gap: 8px; text-decoration: none; color: #666; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; transition: 0.2s; margin-bottom: 16px; }
+        .back-link:hover { color: var(--accent); transform: translateX(-3px); }
+
+        .ui-header { margin-bottom: 20px; border-bottom: 3px solid var(--accent); padding-bottom: 12px; }
+        .ui-brand { font-family: 'Montserrat', sans-serif; font-size: 0.68rem; font-weight: 900; color: var(--accent); letter-spacing: 0.4em; display: block; margin-bottom: 2px; }
+        .ui-title { font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+
+        .control-group { margin-bottom: 0; padding: 14px 0; border-bottom: 1px solid #2a2a2a; }
+        .control-group:last-child { border-bottom: none; }
+
+        h2 { font-size: 0.62rem; color: var(--accent); margin: 0 0 12px; letter-spacing: 0.2em; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        h2::after { content: ""; flex: 1; height: 1px; background: var(--accent); opacity: 0.2; }
+
+        .sub-label { font-size: 0.62rem; color: #666; font-weight: 700; letter-spacing: 0.04em; display: block; margin-bottom: 3px; }
+
+        input[type="text"], select { width: 100%; background: var(--ui-input); border: 1px solid var(--ui-border); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 0.78rem; margin-bottom: 6px; box-sizing: border-box; outline: none; font-family: inherit; transition: border-color 0.15s; }
+        input[type="text"]:focus { border-color: var(--accent); }
+        select { cursor: pointer; }
+
+        .input-with-extension { display: flex; align-items: center; background: var(--ui-input); border: 1px solid var(--ui-border); border-radius: 4px; overflow: hidden; margin-bottom: 6px; transition: border-color 0.15s; }
+        .input-with-extension:focus-within { border-color: var(--accent); }
+        .input-with-extension input { border: none; margin-bottom: 0; border-radius: 0; flex: 1; background: transparent; padding: 6px 10px; }
+        .extension-label { padding: 0 10px; color: #555; font-family: 'Montserrat'; font-weight: 900; font-size: 0.72rem; letter-spacing: 0.05em; border-left: 1px solid #333; height: 100%; display: flex; align-items: center; }
+
+        .file-input-area { border: 2px dashed #4f545c; padding: 24px 20px; border-radius: 8px; background: #2a2a2a; cursor: pointer; margin-bottom: 0; text-align: center; transition: border-color 0.2s, background 0.2s; }
+        .file-input-area:hover, .file-input-area.dragover { border-color: var(--accent); background: #2e2020; }
+        .file-label { color: var(--accent); text-decoration: underline; font-weight: bold; font-size: 0.82rem; }
+
+        .group-panel { background: var(--accent); color: #fff; padding: 14px; border-radius: 6px; margin-bottom: 12px; display: none; }
+        .btn-wrap { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .group-panel button { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.68rem; cursor: pointer; font-weight: bold; transition: 0.15s; display: flex; align-items: center; gap: 4px; }
+        .group-panel button:hover { background: rgba(0,0,0,0.55); }
+        .btn-delete { color: #ff8a8a !important; border: 1px solid rgba(255, 138, 138, 0.3) !important; }
+
+        .char-conf { background: var(--ui-input); border: 1px solid var(--ui-border); padding: 7px 8px; border-radius: 4px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .in-color-picker { width: 22px; height: 22px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
+        .in-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .in-color-picker::-webkit-color-swatch { border: 1px solid #444; border-radius: 2px; }
+        .char-conf .in-name { flex: 1; background: transparent; border: none; color: #fff; font-size: 0.78rem; font-weight: bold; margin: 0; padding: 3px 4px; outline: none; }
+        .char-conf .in-color { width: 72px; background: #1a1a1a; border: 1px solid #444; color: #888; font-size: 0.68rem; padding: 3px 4px; margin: 0; text-align: center; border-radius: 2px; }
+
+        .tab-config-item { background: #181818; border-radius: 4px; padding: 10px 12px; margin-bottom: 6px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #2a2a2a; }
+        .tab-config-top { display: flex; align-items: center; justify-content: space-between; }
+        .tab-config-name { font-size: 0.72rem; font-weight: 900; color: #888; }
+        .tab-config-controls { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; flex: 1; justify-content: flex-end; white-space: nowrap; }
+        .btn-toggle-input { background: none; border: none; color: #666; cursor: pointer; padding: 0; display: flex; align-items: center; transition: color 0.15s; }
+        .btn-toggle-input:hover { color: #fff; }
+        .hidden-input { display: none !important; }
+        .style-select { background: #1a1a1a; color: #eee; border: 1px solid #444; border-radius: 4px; padding: 4px 8px; font-size: 0.68rem; margin-bottom: 0; width: auto; }
+
+        .search-box { background: #181818; padding: 12px; border-radius: 6px; border: 1px solid #2a2a2a; }
+        .search-btns { display: flex; gap: 4px; margin-top: 4px; }
+        .search-btns button { flex: 1; padding: 5px; background: #2a2a2a; border: 1px solid #333; color: #aaa; font-size: 0.62rem; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: inherit; }
+        .search-btns button:hover { background: #333; color: #fff; }
+
+        .anchor-panel { display: none; border-bottom: 1px solid var(--ui-border); padding-bottom: 14px; margin-bottom: 14px; }
+        .anchor-panel.has-items { display: block; }
+        .anchor-panel-title { font-size: 0.68rem; font-weight: 900; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+        .anchor-panel-title:hover { color: #fff; }
+        .anchor-panel-count { background: var(--accent); color: #fff; font-size: 0.58rem; padding: 1px 6px; border-radius: 10px; }
+        .anchor-list { display: flex; flex-direction: column; gap: 3px; max-height: 160px; overflow-y: auto; }
+        .anchor-toggle-icon { transition: transform 0.2s; font-size: 1rem !important; }
+        .anchor-panel.collapsed .anchor-toggle-icon { transform: rotate(-90deg); }
+        .anchor-panel.collapsed .anchor-list { display: none; }
+        .anchor-list-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; cursor: pointer; transition: 0.15s; background: var(--ui-input); border: 1px solid transparent; }
+        .anchor-list-item:hover { border-color: var(--accent); background: var(--selection-bg); }
+        .anchor-list-num { font-family: 'Montserrat', sans-serif; font-size: 0.58rem; font-weight: 900; color: var(--accent); min-width: 18px; }
+        .anchor-list-name { font-size: 0.72rem; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+        .save-btn { width: 100%; padding: 13px; background: var(--accent); color: white; border: none; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.9rem; letter-spacing: 0.12em; transition: 0.2s; font-family: 'Montserrat', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .save-btn:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+        .save-btn:active:not(:disabled) { transform: translateY(0); }
+        .save-btn:disabled { background: #333; color: #555; cursor: default; transform: none; }
+        .save-btn .material-symbols-outlined { font-size: 1.1rem; }
+        .edit-log-btn { width: 100%; padding: 11px; background: transparent; color: #d8d8d8; border: 1px solid #333; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.72rem; letter-spacing: 0.12em; transition: 0.2s; font-family: 'Montserrat', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+        .edit-log-btn:hover:not(:disabled) { color: #fff; border-color: var(--accent); background: var(--selection-bg); }
+        .edit-log-btn:disabled { opacity: .35; cursor: default; }
+        .archive-btn { width: 100%; margin-top: 8px; padding: 11px; background: transparent; color: #8ab0d8; border: 1px solid #1a3a6a; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.72rem; letter-spacing: 0.1em; transition: 0.2s; font-family: 'Montserrat', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .archive-btn:hover:not(:disabled) { color: #c4dcff; border-color: #3a6aaa; background: rgba(26,58,106,.15); }
+        .archive-btn:disabled { opacity: .35; cursor: default; }
+
+        .clear-btn { width: 100%; background: none; border: 1px solid #2a2a2a; color: #555; font-size: 0.68rem; font-weight: 700; cursor: pointer; margin-top: 8px; padding: 7px; border-radius: 4px; font-family: 'Montserrat', sans-serif; letter-spacing: 0.06em; transition: 0.2s; }
+        .clear-btn:hover { border-color: #444; color: #888; }
+
+        .main-content { flex: 1; background: #0a0a0a; overflow-y: auto; padding: 40px 0; scroll-behavior: smooth; }
+        .log-row { position: relative; width: 100%; max-width: 900px; margin: 0 auto; padding: 20px 15px; border-bottom: 1px solid #222; transition: 0.1s; border-left: 4px solid transparent; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; }
+        .log-row.search-hit { outline: 2px solid rgba(255, 235, 59, 0.3); background: rgba(255, 235, 59, 0.05); }
+        .log-row.preview-info, .log-row.preview-secret, .log-row.preview-chat { background: #151515; }
+        .log-row.preview-chat .row-content { color: #555; }
+        .log-row.preview-chat .row-name { opacity: 0.5; }
+        .log-row.preview-info { border-left: 4px solid #444; }
+
+        .col-select { display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px dashed #333; }
+        .row-checkbox { display: none; }
+        .select-label { font-size: 0.65rem; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; padding: 4px 10px; border: 1px solid #444; border-radius: 4px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .select-label::before { content: ''; display: inline-block; width: 8px; height: 8px; border: 1px solid #666; border-radius: 2px; }
+        .row-checkbox:checked + .select-label { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .row-checkbox:checked + .select-label::before { background: #fff; border-color: #fff; }
+
+        .action-group { margin-left: auto; display: flex; gap: 8px; }
+        .move-btn { background: none; border: none; color: #555; cursor: pointer; padding: 4px; transition: 0.2s; border-radius: 4px; }
+        .move-btn:hover { color: var(--accent); background: rgba(255,255,255,0.05); }
+        .del-btn { background: none; border: none; color: #444; cursor: pointer; padding: 4px; transition: 0.2s; border-radius: 4px; }
+        .del-btn:hover { color: #ff8a8a; background: rgba(255,255,255,0.05); }
+
+        .row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
+        .row-name { font-weight: bold; font-size: 1rem; flex-shrink: 0; }
+
+        .anchor-area { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end; }
+        .anchor-check-label { font-size: 0.6rem; color: #555; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .anchor-input { background: rgba(255, 255, 255, 0.05) !important; border: 1px solid #333 !important; color: var(--accent) !important; font-size: 0.65rem !important; padding: 2px 8px !important; width: 180px !important; margin: 0 !important; display: none; }
+        .anchor-check:checked + .anchor-input { display: block; }
+
+        .row-content { width: 100%; min-height: 40px; background: transparent; border: none; color: #ccc; font-family: inherit; font-size: 0.95rem; line-height: 1.6; resize: none; overflow: hidden; box-sizing: border-box; }
+        mark { background: #ffeb3b; color: #000; border-radius: 2px; }
+
+        #emptyState { text-align: center; color: #444; margin-top: 60px; }
+        .guide-container { max-width: 600px; margin: 30px auto; text-align: left; background: #111; padding: 36px; border-radius: 12px; border: 1px solid #222; }
+        .guide-welcome { margin-bottom: 24px; border-bottom: 1px solid #2a2a2a; padding-bottom: 18px; }
+        .guide-welcome h1 { font-family: 'Montserrat'; font-weight: 900; font-size: 1.6rem; color: #fff; margin: 0; letter-spacing: 0.05em; }
+        .guide-welcome p { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin: 4px 0 0; letter-spacing: 0.1em; }
+        .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .guide-item { display: flex; gap: 12px; align-items: flex-start; }
+        .guide-icon { color: var(--accent); padding-top: 2px; font-size: 1.3rem !important; }
+        .guide-text b { color: #eee; font-size: 0.82rem; display: block; margin-bottom: 3px; }
+        .guide-text p { font-size: 0.72rem; color: #666; margin: 0; line-height: 1.5; }
+
+        .mobile-menu-btn { position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: white; border: none; z-index: 10001; cursor: pointer; display: none; align-items: center; justify-content: center; }
+        .three-dots { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+        .three-dots span { width: 4px; height: 4px; background: white; border-radius: 50%; transition: transform 0.3s ease, opacity 0.3s ease, border-radius 0.3s ease; transform-origin: center; }
+        .mobile-menu-btn.is-active .three-dots span:nth-child(1) { transform: translateY(8px) rotate(45deg) scaleX(3.5); border-radius: 2px; }
+        .mobile-menu-btn.is-active .three-dots span:nth-child(2) { opacity: 0; transform: scale(0); }
+        .mobile-menu-btn.is-active .three-dots span:nth-child(3) { transform: translateY(-8px) rotate(-45deg) scaleX(3.5); border-radius: 2px; }
+
+        /* ── 途中保存UI ── */
+        .save-load-group { display: flex; gap: 6px; margin-bottom: 6px; }
+        .sl-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 7px 6px; background: #1a1a1a; border: 1px solid var(--ui-border); color: #aaa; font-size: 0.68rem; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: inherit; letter-spacing: 0.04em; }
+        .sl-btn:hover:not(:disabled) { background: #2a2a2a; color: #fff; border-color: #666; }
+        .sl-btn:disabled { opacity: 0.35; cursor: default; }
+        .sl-btn.primary { background: rgba(197,55,60,0.12); border-color: rgba(197,55,60,0.4); color: var(--accent); }
+        .sl-btn.primary:hover:not(:disabled) { background: rgba(197,55,60,0.22); border-color: var(--accent); }
+        .sl-btn .material-symbols-outlined { font-size: 0.95rem !important; }
+        #saveStatusText { font-size: 0.6rem; color: #555; min-height: 1.2em; margin-bottom: 8px; font-family: 'Montserrat', sans-serif; letter-spacing: 0.03em; }
+
+        /* トースト通知 */
+        #saveToast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(10px); background: #2a2a2a; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 9px 20px; border-radius: 20px; border: 1px solid #444; opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; z-index: 9999; white-space: nowrap; font-family: 'Montserrat', sans-serif; letter-spacing: 0.06em; }
+        #saveToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .modal-ov { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.72); z-index: 10020; padding: 18px; box-sizing: border-box; }
+        .modal-ov.open { display: flex; }
+        .modal { width: min(520px, 100%); max-height: calc(100vh - 36px); overflow: auto; background: #050505; border: 1px solid #242424; border-top: 2px solid var(--accent); box-shadow: 0 22px 70px rgba(0,0,0,.68), 0 0 20px rgba(120,35,140,.15); padding: 22px; box-sizing: border-box; position: relative; }
+        .modal-x { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; display: grid; place-items: center; background: #080808; border: 1px solid #242424; color: #777; cursor: pointer; font-size: 0.9rem; }
+        .modal-x:hover { color: #fff; border-color: var(--accent); }
+        .modal-h { color: #fff; font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: .18em; font-size: .9rem; margin: 0 34px 16px 0; }
+        .mf { margin-bottom: 12px; }
+        .mf label { display: block; color: #666; font-size: .58rem; font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: .16em; margin-bottom: 5px; }
+        .mf textarea { width: 100%; min-height: 76px; resize: vertical; background: var(--ui-input); border: 1px solid var(--ui-border); color: var(--text-main); border-radius: 4px; padding: 8px 10px; box-sizing: border-box; font-family: inherit; line-height: 1.55; outline: none; }
+        .mf input[type="number"], .mf input[type="date"] { width: 100%; background: var(--ui-input); border: 1px solid var(--ui-border); color: var(--text-main); padding: 6px 10px; border-radius: 4px; font-size: 0.78rem; box-sizing: border-box; outline: none; font-family: inherit; }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-act { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+        .modal-act button { min-height: 34px; padding: 0 14px; border-radius: 2px; font-family: 'Montserrat', sans-serif; font-size: .64rem; font-weight: 900; letter-spacing: .1em; cursor: pointer; }
+        .btn-g { background: #060606; border: 1px solid #242424; color: #777; }
+        .btn-p { background: var(--accent); border: 1px solid var(--accent); color: #fff; }
+        .btn-g:hover { color: #eee; border-color: #555; }
+        .btn-p:hover { filter: brightness(1.12); }
+
+        /* TRPG ARCHIVE skin: UI only. Exported log format is untouched. */
+        :root {
+            --bg-dark: #020202;
+            --card-bg: #050505;
+            --ui-input: #030303;
+            --ui-border: #1e1e1e;
+            --accent: #78238C;
+            --accent-dim: rgba(120,35,140,0.13);
+            --accent-glow: rgba(120,35,140,0.35);
+            --text-main: #d8d8d8;
+            --text-sub: #727272;
+            --selection-bg: rgba(120,35,140,0.15);
+        }
+        body::after {
+            content: ''; position: fixed; inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.04) 3px, rgba(0,0,0,.04) 4px);
+            pointer-events: none; z-index: 9998;
+        }
+        .sidebar { background: var(--card-bg); border-right-color: var(--ui-border); }
+        .sidebar-scroll { padding: 20px 18px; scrollbar-color: #1a1a1a transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #1a1a1a; }
+        .sidebar-footer { background: #030303; border-top-color: var(--ui-border); }
+        .back-link { color: #555; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }
+        .ui-header { border-bottom: 1px solid var(--ui-border); padding-bottom: 16px; margin-bottom: 8px; }
+        .ui-brand { letter-spacing: .32em; }
+        .ui-title { color: #fff; font-size: 1.15rem; letter-spacing: .12em; }
+        .control-group { border-bottom-color: #121212; padding: 16px 0; }
+        h2 { font-family: 'Montserrat', sans-serif; font-size: .54rem; letter-spacing: .26em; }
+        h2::after { background: var(--ui-border); opacity: 1; }
+        .sub-label, label { color: #5f5f5f !important; }
+        input[type="text"], select, textarea {
+            background: var(--ui-input) !important;
+            border-color: var(--ui-border) !important;
+            border-radius: 2px !important;
+            color: var(--text-main) !important;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent-dim); }
+        .input-with-extension { background: var(--ui-input); border-color: var(--ui-border); border-radius: 2px; }
+        .extension-label { border-left-color: #161616; color: #444; }
+        .file-input-area {
+            background: #060606;
+            border: 1px dashed #242424;
+            border-radius: 2px;
+            padding: 24px 18px;
+        }
+        .file-input-area:hover, .file-input-area.dragover {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+        .file-label { color: #d9a5ea; text-decoration: none; font-family: 'Montserrat', sans-serif; letter-spacing: .08em; }
+        .char-conf, .tab-config-item, .search-box, .anchor-list-item, .guide-container {
+            background: #060606;
+            border: 1px solid var(--ui-border);
+            border-radius: 2px;
+        }
+        .char-conf .in-name { color: var(--text-main); }
+        .char-conf .in-color, .style-select { background: #030303; border-color: var(--ui-border); border-radius: 2px; }
+        .search-btns button, .sl-btn, .clear-btn, .group-panel button {
+            background: #060606;
+            border: 1px solid var(--ui-border);
+            border-radius: 2px;
+            color: #777;
+            font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+        }
+        .search-btns button:hover, .sl-btn:hover:not(:disabled), .clear-btn:hover {
+            border-color: var(--accent);
+            color: #e0b4f0;
+            background: var(--accent-dim);
+        }
+        .sl-btn.primary {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: #e0b4f0;
+        }
+        .save-btn {
+            background: var(--accent);
+            border-radius: 2px;
+            min-height: 42px;
+            box-shadow: 0 0 18px rgba(120,35,140,.18);
+        }
+        .save-btn:hover:not(:disabled) { filter: none; background: #9b2fbe; box-shadow: 0 0 18px var(--accent-glow); }
+        .save-btn:disabled { background: #111; border: 1px solid #1d1d1d; color: #3a3a3a; }
+        .archive-btn, .edit-log-btn { border-radius: 2px; }
+        .clear-btn { border-color: #1a1a1a; color: #444; }
+        .main-content { background: #000; }
+        .log-row { max-width: 900px; border-bottom-color: #151515; border-left-width: 3px; }
+        .log-row.preview-info, .log-row.preview-secret, .log-row.preview-chat { background: #050505; }
+        .log-row.search-hit { outline-color: rgba(120,35,140,.45); background: rgba(120,35,140,.08); }
+        .select-label { border-color: #262626; border-radius: 2px; color: #666; }
+        .row-checkbox:checked + .select-label { background: var(--accent); border-color: var(--accent); }
+        .move-btn:hover, .del-btn:hover { background: var(--accent-dim); }
+        .row-content { color: #c8c8c8; }
+        .anchor-panel { border-bottom-color: var(--ui-border); }
+        .anchor-panel-title { color: #777; font-family: 'Montserrat', sans-serif; }
+        .anchor-panel-title:hover { color: #e0b4f0; }
+        .anchor-panel-count { background: var(--accent); }
+        .guide-container { border-top: 2px solid var(--accent); border-radius: 2px; box-shadow: 0 0 35px rgba(0,0,0,.45); }
+        .guide-welcome { border-bottom-color: var(--ui-border); }
+        .guide-welcome h1 { color: #fff; letter-spacing: .12em; }
+        .guide-text b { color: #ddd; }
+        .guide-text p { color: #666; }
+        #saveToast {
+            background: #050505;
+            border: 1px solid var(--accent);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            box-shadow: 0 0 20px rgba(0,0,0,.8), 0 0 10px var(--accent-glow);
+        }
+
+        @media screen and (max-width: 1024px) {
+            .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); height: 100%; width: 85%; max-width: 380px; }
+            .sidebar.active { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .mobile-menu-btn { display: flex; }
+            .log-row { width: calc(100% - 20px); padding: 15px 15px 15px 55px; margin: 0 10px; min-height: 130px; }
+            .col-select { left: 8px; }
+            .guide-grid { grid-template-columns: 1fr; }
+            .modal-grid { grid-template-columns: 1fr; gap: 0; }
+            input, textarea, select { font-size: 16px !important; }
+            .del-btn { padding: 8px; margin-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="menu-toggle" class="mobile-menu-btn">
+        <div class="three-dots"><span></span><span></span><span></span></div>
+    </button>
+
+    <aside class="sidebar">
+  <div class="sidebar-scroll">
+    <a href="index.html" class="back-link">
+        <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back_ios</span>
+        BACK TO TOOLBOX
+    </a>
+
+    <div class="ui-header">
+        <span class="ui-brand">IKATOOLBOX</span>
+        <div class="ui-title">LOG EDITOR</div>
+    </div>
+
+    <div class="control-group">
+        <h2>1. ファイル読込</h2>
+        <input type="file" id="logFile" accept=".html" style="display:none" onchange="processLog(this.files[0])">
+        <div class="file-input-area" id="dropZone" onclick="document.getElementById('logFile').click()">
+            <p style="font-size:0.75rem; color:var(--text-sub); margin:0;">HTMLをドロップするか<br><span class="file-label">ファイルを選択</span></p>
+        </div>
+    </div>
+
+    <!-- 途中保存・読み込みセクション（常に表示） -->
+    <div class="control-group">
+        <h2>途中保存 / 読み込み</h2>
+        <div id="saveStatusText">保存データなし</div>
+        <div class="save-load-group">
+            <button class="sl-btn primary" onclick="saveProgress()">
+                <span class="material-symbols-outlined">save</span>途中保存
+            </button>
+            <button class="sl-btn" id="loadProgressBtn" onclick="loadProgress(null)" disabled>
+                <span class="material-symbols-outlined">restore</span>復元
+            </button>
+        </div>
+        <div class="save-load-group">
+            <button class="sl-btn" onclick="exportSaveJson()">
+                <span class="material-symbols-outlined">download</span>JSONで保存
+            </button>
+            <input type="file" id="importJsonFile" accept=".json" style="display:none" onchange="importSaveJson(this.files[0])">
+            <button class="sl-btn" onclick="document.getElementById('importJsonFile').click()">
+                <span class="material-symbols-outlined">upload</span>JSONから復元
+            </button>
+        </div>
+    </div>
+
+   <div id="postUploadControls" style="display: none;">
+        <div class="control-group">
+            <h2>2. タイトル設定</h2>
+            <label style="font-size:0.62rem; color:#666; font-weight:700; letter-spacing:0.04em; display:block; margin-bottom:3px;">セッションタイトル</label>
+            <input type="text" id="logTitleInput" placeholder="セッションタイトル">
+
+            <label style="font-size:0.62rem; color:#666; font-weight:700; letter-spacing:0.04em; display:block; margin:10px 0 3px;">書き出しファイル名</label>
+            <div class="input-with-extension">
+                <input type="text" id="fileNameInput" placeholder="export_log">
+                <span class="extension-label">.html</span>
+            </div>
+
+            <label style="font-size:0.62rem; color:#666; font-weight:700; letter-spacing:0.04em; display:block; margin:10px 0 3px;">システム名（ヘッダー表示）</label>
+            <select id="systemSelect" class="style-select" style="width:100%; margin-bottom:6px; height:34px;" onchange="toggleCustomSystem(this.value)">
+                <option value="CALL OF CTHULHU 6th">Call of Cthulhu 6th</option>
+                <option value="CALL OF CTHULHU 7th">Call of Cthulhu 7th</option>
+                <option value="EMOKLORE">Emoklore</option>
+                <option value="CUSTOM" selected>その他（自由入力）</option>
+            </select>
+            <input type="text" id="customSystemInput" placeholder="システム名を入力" value="LOG ARCHIVE">
+        </div>
+
+        <div class="control-group">
+            <h2>3. 検索・置換・掃除</h2>
+            <div class="search-btns" style="margin-top:0; margin-bottom:10px;">
+                <button onclick="cleanUpLogData()" style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">mop</span>ログを掃除する
+                </button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="検索ワード..." oninput="handleSearch()">
+                <div class="search-btns">
+                    <button onclick="navSearch(-1)">前へ</button>
+                    <button onclick="navSearch(1)">次へ</button>
+                </div>
+                <div style="margin-top:10px; border-top:1px solid #2a2a2a; padding-top:10px;">
+                    <input type="text" id="replaceInput" placeholder="置換後のワード...">
+                    <div class="search-btns" style="margin-top:4px;">
+                        <button onclick="handleReplace()">一括置換</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editorSettings" style="display:none; margin-top:12px;">
+                <div id="groupPanel" class="group-panel">
+                    <div id="selectionInfo" style="font-size: 0.62rem; font-weight: 900; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">選択した行をまとめて操作</div>
+                    <div class="btn-wrap">
+                        <button onclick="moveGroup(-1)"><span class="material-symbols-outlined">north</span> 上へ</button>
+                        <button onclick="moveGroup(1)"><span class="material-symbols-outlined">south</span> 下へ</button>
+                        <button onclick="groupAndMove()"><span class="material-symbols-outlined">low_priority</span> 詰めて移動</button>
+                        <button onclick="deleteSelectedRows()" class="btn-delete"><span class="material-symbols-outlined">delete</span> 削除</button>
+                        <button onclick="clearSelection()"><span class="material-symbols-outlined">close</span> 取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group" id="autoIndexSection">
+            <h2>4. 目次の自動検出</h2>
+            <div style="font-size:0.68rem; color:#666; margin-bottom:10px; line-height:1.6;">場面転換を自動で検出して目次を設定します。検出後、各行で個別に調整できます。</div>
+
+            <label class="sub-label">検出タブ（どのタブを対象にするか）</label>
+            <select id="autoIndexTab" style="margin-bottom:10px;"></select>
+
+            <label class="sub-label">検出キーワード（1行に1つ、部分一致）</label>
+            <textarea id="sceneKeywords" style="width:100%; background:var(--ui-input); border:1px solid var(--ui-border); color:#fff; padding:8px 10px; border-radius:4px; font-size:0.75rem; box-sizing:border-box; font-family:inherit; resize:vertical; min-height:80px; outline:none; line-height:1.6;" placeholder="Scene&#10;場面&#10;＊＊＊&#10;―――&#10;chapter"></textarea>
+
+            <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
+                <label style="font-size:0.65rem; color:#666; display:flex; align-items:center; gap:4px; cursor:pointer; white-space:nowrap;">
+                    <input type="checkbox" id="autoIndexClearFirst" checked style="accent-color:var(--accent);"> 既存の目次をクリア
+                </label>
+            </div>
+
+            <div style="margin-top:10px; display:flex; gap:6px;">
+                <button onclick="autoDetectScenes()" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px; background:rgba(197,55,60,0.12); border:1px solid rgba(197,55,60,0.4); color:var(--accent); font-size:0.72rem; font-weight:900; border-radius:4px; cursor:pointer; transition:0.15s; font-family:inherit; letter-spacing:0.04em;" onmouseover="this.style.background='rgba(197,55,60,0.22)'" onmouseout="this.style.background='rgba(197,55,60,0.12)'">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">auto_stories</span>目次を自動検出
+                </button>
+                <button onclick="clearAllAnchors()" title="目次をすべてクリア" style="padding:9px 12px; background:#1a1a1a; border:1px solid #333; color:#555; font-size:0.72rem; border-radius:4px; cursor:pointer; transition:0.15s; font-family:inherit;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">delete_sweep</span>
+                </button>
+            </div>
+            <div id="autoIndexResult" style="font-size:0.65rem; color:#666; margin-top:8px; min-height:1.2em; font-family:'Montserrat',sans-serif; letter-spacing:0.03em;"></div>
+        </div>
+
+        <div class="control-group">
+            <h2>5. キャラクター設定</h2>
+            <div id="charGrid"></div>
+        </div>
+        <div class="control-group">
+            <h2>6. タブ装飾設定</h2>
+            <div id="tabStyleSettings"></div>
+        </div>
+    </div> 
+    </div>
+<div class="sidebar-footer">
+    <div class="anchor-panel" id="anchorPanel">
+        <div class="anchor-panel-title" onclick="document.getElementById('anchorPanel').classList.toggle('collapsed')">
+            <span style="display:flex;align-items:center;gap:6px;">
+                <span class="material-symbols-outlined anchor-toggle-icon">expand_more</span>
+                目次一覧
+            </span>
+            <span class="anchor-panel-count" id="anchorCount">0</span>
+        </div>
+        <div class="anchor-list" id="anchorList"></div>
+    </div>
+    <button class="edit-log-btn" id="editLogBtn" disabled onclick="openGeneratorEditLog()">
+        <span class="material-symbols-outlined">edit_square</span>
+        EDIT LOG
+    </button>
+    <button class="save-btn" id="downloadBtn" disabled onclick="exportLog()">
+        <span class="material-symbols-outlined">download</span>
+        HTMLを書き出し
+    </button>
+    <button class="clear-btn" onclick="if(confirm('入力をすべてクリアしますか？')) location.reload()">入力をクリア</button>
+    <button class="archive-btn" id="archiveExportBtn" disabled onclick="uploadToArchiveDirect()">
+        <span class="material-symbols-outlined">archive</span>
+        ARCHIVEに直接登録
+    </button>
+</div>
+    </aside>
+
+    <main class="main-content" id="mainScrollArea">
+        <div id="emptyState">
+            <div class="guide-container">
+                <div class="guide-welcome">
+                    <h1>使い方</h1>
+                    <p>IKATOOL LOG EDITOR</p>
+                </div>
+
+<div class="guide-grid">
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">upload_file</span>
+        <div class="guide-text">
+            <b>1. ログを読み込む</b>
+            <p>左パネルからココフォリア等のHTMLログを選択します。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">palette</span>
+        <div class="guide-text">
+            <b>2. 見た目を整える</b>
+            <p>名前、色、タブごとの装飾スタイルを一括で変更可能です。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">check_box</span>
+        <div class="guide-text">
+            <b>3. まとめて操作</b>
+            <p>左側のチェックで複数行を選択し、一括移動や削除が行えます。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">cleaning_services</span>
+        <div class="guide-text">
+            <b>4. ログを掃除する</b>
+            <p>「ログを掃除」ボタンで、不要な行を整理して軽量化できます。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">auto_stories</span>
+        <div class="guide-text">
+            <b>5. 目次を自動検出</b>
+            <p>キーワードや特定タブを指定して、場面転換を自動で検出・目次設定します。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">shortcut</span>
+        <div class="guide-text">
+            <b>6. 目次をつける</b>
+            <p>「目次」にチェックを入れて命名すると、ログ内にリンクを作成します。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">auto_fix_high</span>
+        <div class="guide-text">
+            <b>6. ルビを振る</b>
+            <p>「漢字《るび》」または「｜範囲《るび》」の形式でふりがなを表示できます。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">find_replace</span>
+        <div class="guide-text">
+            <b>7. 検索と置換</b>
+            <p>特定のワードを検索し、ログ全体から一括で書き換えられます。</p>
+        </div>
+    </div>
+    <div class="guide-item">
+        <span class="material-symbols-outlined guide-icon">download</span>
+        <div class="guide-text">
+            <b>8. 保存する</b>
+            <p>「HTMLを書き出し」で、自分だけのログファイルを保存できます。</p>
+        </div>
+    </div>
+</div> <div style="margin-top: 20px; display: flex; gap: 8px;">
+                <a href="merger.html" class="back-link" style="margin: 0; padding: 8px 16px; border: 1px solid #444; border-radius: 4px; background: rgba(255,255,255,0.02); font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">merge</span>
+                    LOG MERGER
+                </a>
+            </div>
+        </div>
+</div> </div> </div>
+
+        <div id="logEditor"></div>
+    </main>
+
+<div class="modal-ov" id="generator-edit-modal" role="dialog" aria-modal="true">
+    <div class="modal">
+        <button class="modal-x" onclick="closeGeneratorEditLog()">×</button>
+        <div class="modal-h">EDIT LOG</div>
+        <div class="mf">
+            <label>SCENARIO TITLE</label>
+            <input id="gen-edit-title" type="text" autocomplete="off">
+        </div>
+        <div class="mf">
+            <label>FILE NAME</label>
+            <input id="gen-edit-file" type="text" autocomplete="off">
+        </div>
+        <div class="mf">
+            <label>SYSTEM</label>
+            <select id="gen-edit-system" onchange="toggleGeneratorEditCustom(this.value)">
+                <option value="CALL OF CTHULHU 6th">Call of Cthulhu 6th</option>
+                <option value="CALL OF CTHULHU 7th">Call of Cthulhu 7th</option>
+                <option value="EMOKLORE">Emoklore</option>
+                <option value="CUSTOM">その他（自由入力）</option>
+            </select>
+            <input id="gen-edit-custom-system" type="text" placeholder="システム名を入力" autocomplete="off">
+        </div>
+        <div class="mf">
+            <label>PL NAMES</label>
+            <input id="gen-edit-pl" type="text" placeholder="カンマ区切り" autocomplete="off">
+        </div>
+        <div class="mf">
+            <label>TAGS</label>
+            <input id="gen-edit-tags" type="text" placeholder="カンマ区切り" autocomplete="off">
+        </div>
+        <div class="mf">
+            <label>MEMO</label>
+            <textarea id="gen-edit-note" placeholder="アーカイブに残すメモ"></textarea>
+        </div>
+        <div class="modal-grid">
+            <div class="mf">
+                <label>FOLDER</label>
+                <select id="gen-edit-folder"></select>
+            </div>
+            <div class="mf">
+                <label>SESSION COUNT</label>
+                <input id="gen-edit-sessions" type="number" min="1" value="1">
+            </div>
+        </div>
+        <div class="mf">
+            <label>DATE</label>
+            <input id="gen-edit-date" type="date">
+        </div>
+        <div class="modal-act">
+            <button class="btn-g" onclick="closeGeneratorEditLog()">CANCEL</button>
+            <button class="btn-p" onclick="confirmGeneratorEditLog()">SAVE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let logData = []; 
+    let charSettings = {}; 
+    let tabStyleMap = {}; 
+    let selectedIndices = [];
+    let searchMatches = [];
+    let currentSearchIdx = -1;
+    let lastSelectedIndex = -1;
+    const ARCHIVE_META_KEY = 'trpg_meta_v4';
+    let generatorArchiveMeta = defaultGeneratorArchiveMeta();
+
+    const STYLES = [
+        { id: 'style-default', name: 'メイン' },
+        { id: 'style-info', name: '情報' },
+        { id: 'style-secret', name: '秘匿' },
+        { id: 'style-chat', name: '雑談(その他)' }
+    ];
+
+    const menuBtn = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('active');
+        menuBtn.classList.toggle('is-active');
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const archiveBtn = document.getElementById('archiveExportBtn');
+        const editBtn = document.getElementById('editLogBtn');
+        const clearBtn = document.querySelector('.sidebar-footer .clear-btn');
+        if (archiveBtn) archiveBtn.innerHTML = '<span class="material-symbols-outlined">archive</span>ARCHIVEに直接登録';
+        if (editBtn) editBtn.innerHTML = '<span class="material-symbols-outlined">edit_square</span>EDIT LOG';
+        if (archiveBtn && clearBtn) clearBtn.before(archiveBtn);
+        document.getElementById('generator-edit-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'generator-edit-modal') closeGeneratorEditLog();
+        });
+    });
+
+    function getTodayISO() {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    function countArchiveSessions() {
+        const anchorCount = logData.filter(item => item.anchor).length;
+        return Math.max(1, anchorCount || 1);
+    }
+
+    function defaultGeneratorArchiveMeta() {
+        return {
+            pl: '',
+            tags: [],
+            note: '',
+            folder: '',
+            sessions: 1,
+            date: getTodayISO()
+        };
+    }
+
+    function parseArchiveTags(value) {
+        if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+        return String(value || '').split(',').map(v => v.trim()).filter(Boolean);
+    }
+
+    function normalizeGeneratorArchiveMeta(meta = {}) {
+        const base = defaultGeneratorArchiveMeta();
+        return {
+            pl: String(meta.pl || base.pl),
+            tags: parseArchiveTags(meta.tags),
+            note: String(meta.note || base.note),
+            folder: String(meta.folder || base.folder),
+            sessions: Math.max(1, parseInt(meta.sessions, 10) || countArchiveSessions()),
+            date: meta.date || base.date
+        };
+    }
+
+    function setActionButtonsEnabled(enabled) {
+        ['editLogBtn', 'downloadBtn', 'archiveExportBtn'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = !enabled;
+        });
+    }
+
+    function getArchiveFolders() {
+        try {
+            const current = JSON.parse(localStorage.getItem(ARCHIVE_META_KEY) || '{}');
+            return Array.isArray(current.folders) ? current.folders : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function renderGeneratorFolderOptions(selected = '') {
+        const select = document.getElementById('gen-edit-folder');
+        if (!select) return;
+        const folders = getArchiveFolders();
+        const escapeOption = (str) => String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        select.innerHTML = '<option value="">（未分類）</option>' + folders.map(f => `<option value="${escapeOption(f.id)}">${escapeOption(f.name)}</option>`).join('');
+        select.value = selected || '';
+    }
+
+    function toggleGeneratorEditCustom(value) {
+        const input = document.getElementById('gen-edit-custom-system');
+        if (input) input.style.display = value === 'CUSTOM' ? 'block' : 'none';
+    }
+
+    function setGeneratorEditSystem(system) {
+        const select = document.getElementById('gen-edit-system');
+        const custom = document.getElementById('gen-edit-custom-system');
+        if (!select || !custom) return;
+        const hasOption = [...select.options].some(opt => opt.value === system);
+        select.value = hasOption ? system : 'CUSTOM';
+        custom.value = hasOption ? (document.getElementById('customSystemInput').value || '') : (system || '');
+        toggleGeneratorEditCustom(select.value);
+    }
+
+    function getCurrentGeneratorSystem() {
+        const systemSelectVal = document.getElementById('systemSelect').value;
+        return systemSelectVal === 'CUSTOM'
+            ? (document.getElementById('customSystemInput').value || 'LOG ARCHIVE')
+            : systemSelectVal;
+    }
+
+    function openGeneratorEditLog() {
+        if (!logData.length) { showToast('ログを読み込んでください'); return; }
+        generatorArchiveMeta = normalizeGeneratorArchiveMeta(generatorArchiveMeta);
+        document.getElementById('gen-edit-title').value = document.getElementById('logTitleInput').value || '';
+        document.getElementById('gen-edit-file').value = document.getElementById('fileNameInput').value || '';
+        setGeneratorEditSystem(getCurrentGeneratorSystem());
+        document.getElementById('gen-edit-pl').value = generatorArchiveMeta.pl || '';
+        document.getElementById('gen-edit-tags').value = parseArchiveTags(generatorArchiveMeta.tags).join(', ');
+        document.getElementById('gen-edit-note').value = generatorArchiveMeta.note || '';
+        document.getElementById('gen-edit-sessions').value = generatorArchiveMeta.sessions || countArchiveSessions();
+        document.getElementById('gen-edit-date').value = generatorArchiveMeta.date || getTodayISO();
+        renderGeneratorFolderOptions(generatorArchiveMeta.folder || '');
+        document.getElementById('generator-edit-modal').classList.add('open');
+        setTimeout(() => document.getElementById('gen-edit-title')?.focus(), 40);
+    }
+
+    function closeGeneratorEditLog() {
+        document.getElementById('generator-edit-modal')?.classList.remove('open');
+    }
+
+    function confirmGeneratorEditLog() {
+        const title = document.getElementById('gen-edit-title').value.trim();
+        const fileName = document.getElementById('gen-edit-file').value.trim();
+        const system = document.getElementById('gen-edit-system').value;
+        const customSystem = document.getElementById('gen-edit-custom-system').value.trim();
+        if (title) document.getElementById('logTitleInput').value = title;
+        if (fileName) document.getElementById('fileNameInput').value = fileName;
+        document.getElementById('systemSelect').value = system;
+        document.getElementById('customSystemInput').value = customSystem || 'LOG ARCHIVE';
+        toggleCustomSystem(system);
+        generatorArchiveMeta = normalizeGeneratorArchiveMeta({
+            pl: document.getElementById('gen-edit-pl').value.trim(),
+            tags: document.getElementById('gen-edit-tags').value,
+            note: document.getElementById('gen-edit-note').value.trim(),
+            folder: document.getElementById('gen-edit-folder').value,
+            sessions: document.getElementById('gen-edit-sessions').value,
+            date: document.getElementById('gen-edit-date').value
+        });
+        closeGeneratorEditLog();
+        showToast('EDIT LOGを保存しました');
+    }
+
+    function toggleCustomSystem(val) {
+        const input = document.getElementById('customSystemInput');
+        input.style.display = val === 'CUSTOM' ? 'block' : 'none';
+    }
+
+    function rgbToHex(rgb) {
+        if (!rgb || rgb.startsWith('#')) return rgb || '#DBDEE1';
+        const parts = rgb.match(/\d+/g);
+        if (!parts) return '#DBDEE1';
+        return "#" + parts.slice(0,3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function getCharKey(name, color) {
+        return btoa(encodeURIComponent(name + color)).replace(/=/g, "");
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    // ページ読み込み時に保存状態を確認
+    const existingSave = localStorage.getItem(SAVE_KEY);
+    if (existingSave) {
+        try {
+            const s = JSON.parse(existingSave);
+            updateSaveStatus(s.savedAt);
+        } catch(e) { localStorage.removeItem(SAVE_KEY); }
+    }
+
+    const dropArea = document.getElementById('dropZone');
+    if (!dropArea) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    dropArea.addEventListener('dragenter', () => dropArea.classList.add('dragover'));
+    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+    dropArea.addEventListener('drop', (e) => {
+        dropArea.classList.remove('dragover');
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files[0]) {
+            processLog(files[0]);
+        }
+    }, false);
+});
+
+    async function processLog(file) {
+        if (!file) return;
+        logData = []; charSettings = {}; tabStyleMap = {}; selectedIndices = []; lastSelectedIndex = -1;
+        generatorArchiveMeta = defaultGeneratorArchiveMeta();
+        const text = await file.text();
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        const baseTitle = file.name.replace('.html', '').replace(/\[all\]/gi, '').trim();
+        document.getElementById('logTitleInput').value = baseTitle;
+        document.getElementById('fileNameInput').value = baseTitle;
+
+	doc.querySelectorAll('p').forEach((p) => {
+            const htmlWithNewlines = p.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlWithNewlines;
+            const match = tempDiv.innerText.match(/\[(.*?)\]\s*(.*?)\s*:\s*([\s\S]*)/); 
+            
+            if (!match) return;
+            let [_, tabRaw, name, content] = match;            
+            content = content.trim();
+            if (!content) return;
+
+            const tab = tabRaw.replace(/\(.*\)|（.*）/g, "").trim();
+            const color = rgbToHex(p.style.color);
+            const charKey = getCharKey(name, color);
+            logData.push({ charKey, content, tab, anchor: '' });
+            if (!tabStyleMap[tab]) {
+                let defaultColor = '#333333'; 
+                let style = 'style-chat';     
+                
+                if (tab.match(/info|情報|system/i)) { 
+                    style = 'style-info'; 
+                    defaultColor = '#444444'; 
+                } else if (tab.match(/秘匿|秘密|HO/i)) { 
+                    style = 'style-secret'; 
+                    defaultColor = '#8e44ad'; 
+                } else if (tab.match(/main|メイン/i)) {
+                    style = 'style-default';
+                    defaultColor = '#C5373C';
+                }
+                
+                tabStyleMap[tab] = { style, color: defaultColor };
+            }
+            if (!charSettings[charKey]) charSettings[charKey] = { displayName: name, color: color };
+        });
+
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('postUploadControls').style.display = 'block';
+        generatorArchiveMeta = normalizeGeneratorArchiveMeta(generatorArchiveMeta);
+        setActionButtonsEnabled(true);
+        renderCharConfigs(); renderTabSettings(); renderEditor(true); renderAnchorPanel(); populateAutoIndexTab();
+    }
+
+    function renderCharConfigs() {
+        const container = document.getElementById('charGrid');
+        container.innerHTML = '';
+        Object.keys(charSettings).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'char-conf';
+            div.innerHTML = `
+                <input type="color" class="in-color-picker" value="${charSettings[key].color}" oninput="charSettings['${key}'].color=this.value.toUpperCase(); this.nextElementSibling.nextElementSibling.value=this.value.toUpperCase(); updateAllRowColors('${key}')">
+                <input type="text" class="in-name" value="${charSettings[key].displayName}" oninput="charSettings['${key}'].displayName=this.value; updateAllRowNames('${key}')">
+                <input type="text" class="in-color" value="${charSettings[key].color}" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value)){charSettings['${key}'].color=this.value.toUpperCase(); this.previousElementSibling.previousElementSibling.value=this.value; updateAllRowColors('${key}')}">
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateAllRowColors(key) {
+        const color = charSettings[key].color;
+        document.querySelectorAll(`.row-name[data-charkey="${key}"]`).forEach(el => el.style.color = color);
+    }
+    function updateAllRowNames(key) {
+        const name = charSettings[key].displayName;
+        document.querySelectorAll(`.row-name[data-charkey="${key}"]`).forEach(el => {
+            const tabEl = el.querySelector('small');
+            const tab = tabEl ? tabEl.innerText : '';
+            el.innerHTML = `${name} <small style="color:#444; font-size:0.6rem;">${tab}</small>`;
+        });
+    }
+
+    // タブカラー変更：全行再描画せずDOMを直接更新
+    function updateTabColor(tab, color) {
+        const config = tabStyleMap[tab];
+        const isInfo = tab.toLowerCase() === 'info';
+        const isChat = config.style === 'style-chat' || config.style === 'style-default';
+        const isSecret = config.style === 'style-secret';
+
+        document.querySelectorAll('.log-row').forEach((row, i) => {
+            const item = logData[i];
+            if (!item || item.tab !== tab) return;
+            const char = charSettings[item.charKey] || { color: '#888' };
+
+            // row-name の border-left と文字色
+            const nameEl = row.querySelector('.row-name');
+            if (nameEl) {
+                if (isInfo) {
+                    nameEl.style.borderLeftColor = color;
+                } else {
+                    nameEl.style.borderLeftColor = char.color;
+                }
+            }
+            // secret タブの背景
+            if (isSecret) {
+                row.style.setProperty('background-color', color + '44', 'important');
+            }
+            // info タブの行 border-left
+            if (isInfo) {
+                row.style.borderLeft = `4px solid ${color}`;
+            }
+        });
+    }
+
+function renderTabSettings() {
+        const container = document.getElementById('tabStyleSettings');
+        container.innerHTML = '';
+        Object.keys(tabStyleMap).forEach(tab => {
+            const div = document.createElement('div');
+            div.className = 'tab-config-item';
+            div.innerHTML = `
+                <div class="tab-config-top">
+                    <span class="tab-config-name">${tab}</span>
+                    <div class="tab-config-controls">
+                        <input type="color" class="in-color-picker" value="${tabStyleMap[tab].color}" 
+                            oninput="tabStyleMap['${tab}'].color=this.value.toUpperCase(); this.nextElementSibling.nextElementSibling.value=this.value.toUpperCase(); updateTabColor('${tab}', this.value.toUpperCase())">
+                        
+                        <button class="btn-toggle-input" onclick="this.nextElementSibling.classList.toggle('hidden-input')" title="カラーコード入力を表示">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">settings</span>
+                        </button>
+
+                        <input type="text" class="in-color hidden-input" value="${tabStyleMap[tab].color}" 
+                            style="width: 75px; background: #222; border: 1px solid #444; color: #888; font-size: 0.7rem; padding: 4px; margin: 0; text-align: center; border-radius: 2px;"
+                            oninput="if(/^#[0-9A-F]{6}$/i.test(this.value)){const v=this.value.toUpperCase(); tabStyleMap['${tab}'].color=v; this.previousElementSibling.previousElementSibling.value=v; updateTabColor('${tab}', v)}">
+                        
+                        <select class="style-select" 
+                            onchange="tabStyleMap['${tab}'].style=this.value; renderEditor(true)">
+                            ${STYLES.map(s => `<option value="${s.id}" ${tabStyleMap[tab].style === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updatePreviewStyles() {
+        logData.forEach((item, index) => {
+            const row = document.getElementById(`row-${index}`);
+            if(!row) return;
+            row.classList.remove('preview-info', 'preview-secret', 'preview-chat');
+            const styleObj = tabStyleMap[item.tab];
+            if(styleObj.style === 'style-info') row.classList.add('preview-info');
+            if(styleObj.style === 'style-secret') row.classList.add('preview-secret');
+            if(styleObj.style === 'style-chat') row.classList.add('preview-chat');
+        });
+    }
+
+function renderEditor(fullInit = false) {
+    const scrollPos = window.scrollY;
+
+    const container = document.getElementById('logEditor');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    searchMatches = [];
+
+    if (fullInit) {
+        container.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const row = entry.target;
+                    const index = parseInt(row.dataset.index);
+                    if (row.getAttribute('data-rendered') === 'false') {
+                        renderRowContent(row, index);
+                        row.setAttribute('data-rendered', 'true');
+                        observer.unobserve(row);
+                    }
+                }
+            });
+        }, { rootMargin: '500px 0px' });
+
+        logData.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.classList.add('log-row');
+            row.setAttribute('id', 'row-' + index);
+            row.setAttribute('data-index', index);
+            row.setAttribute('data-rendered', 'false');
+            row.style.minHeight = '100px'; 
+            fragment.appendChild(row);
+            observer.observe(row);
+        });
+        container.appendChild(fragment);
+        updatePreviewStyles();
+    }
+
+    logData.forEach((item, index) => {
+        const row = document.getElementById(`row-${index}`);
+        if(!row) return;
+        const isSelected = selectedIndices.includes(index);
+        const isHit = searchTerm && item.content.toLowerCase().includes(searchTerm);
+        if (isHit) searchMatches.push(index);
+        row.classList.toggle('selected', isSelected);
+        row.classList.toggle('search-hit', isHit);
+        const cb = row.querySelector('.row-checkbox');
+        if(cb) cb.checked = isSelected;
+    });
+
+    if (fullInit) {
+        window.scrollTo(0, scrollPos);
+    }
+}
+function renderRowContent(row, index) {
+        const item = logData[index];
+        const char = charSettings[item.charKey] || { displayName: "Unknown", color: "#888" };
+        const isSelected = selectedIndices.includes(parseInt(index));
+        
+        const currentTabConfig = tabStyleMap[item.tab] || { color: "#888", style: "normal" };
+        const isInfo = item.tab.toLowerCase() === 'info';
+
+        const accentColor = isInfo ? "#444" : (currentTabConfig.color || "#444");
+        const nameBarColor = isInfo ? (currentTabConfig.color || "#888") : char.color;
+
+        // イベントはdata-indexから行番号を読み取る方式で登録（インデックスをHTMLへ直接埋め込まない）
+        row.innerHTML = `
+            <div class="row-header">
+                <span class="row-name" data-charkey="${item.charKey}" style="color:${isInfo ? '#888' : char.color}; border-left: 3px solid ${nameBarColor}; padding-left: 8px;">
+                    ${char.displayName} <small style="color:#444; font-size:0.6rem;">[${item.tab}]</small>
+                </span>
+                <div class="anchor-area" style="display: flex; gap: 10px; align-items: center;">
+                    <label class="anchor-check-label">
+                        <input type="checkbox" class="anchor-check" ${item.anchor ? 'checked' : ''}>目次
+                        <input type="text" class="anchor-input" value="${item.anchor || ''}" placeholder="目次名を入力" style="${item.anchor ? 'display:block' : ''}">
+                    </label>
+                    <div class="ruby-buttons" style="display: flex; gap: 3px;">
+                        <button type="button" class="ruby-btn" data-ruby-type="｜" style="background: #333; color: #888; border: 1px solid #444; padding: 2px 5px; border-radius: 3px; font-size: 0.6rem; cursor: pointer;">｜</button>
+                        <button type="button" class="ruby-btn" data-ruby-type="《》" style="background: #333; color: #888; border: 1px solid #444; padding: 2px 5px; border-radius: 3px; font-size: 0.6rem; cursor: pointer;">《 》</button>
+                    </div>
+                </div>
+            </div>
+            <textarea class="row-content">${item.content}</textarea>
+            <div class="col-select">
+                <input type="checkbox" id="check-${index}" class="row-checkbox" ${isSelected ? 'checked' : ''}>
+                <label for="check-${index}" class="select-label">Select</label>
+                <div class="action-group">
+                    <button class="move-btn move-up" title="上に移動"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                    <button class="move-btn move-down" title="下に移動"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+                    <button class="del-btn" title="削除"><span class="material-symbols-outlined">delete</span></button>
+                </div>
+            </div>
+        `;
+
+        // イベントリスナーはdata-indexを参照するクロージャで登録（行移動後も正しく動作する）
+        const getIdx = () => parseInt(row.dataset.index);
+        row.querySelector('.anchor-check').addEventListener('change', function() { toggleAnchor(getIdx(), this.checked); });
+        row.querySelector('.anchor-input').addEventListener('input', function() { logData[getIdx()].anchor = this.value; renderAnchorPanel(); });
+        row.querySelectorAll('.ruby-btn').forEach(btn => {
+            btn.addEventListener('click', function() { applyRubyToRow(getIdx(), this.dataset.rubyType); });
+        });
+        row.querySelector('.row-content').addEventListener('input', function() {
+            logData[getIdx()].content = this.value;
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        row.querySelector('.row-checkbox').addEventListener('change', function() { toggleSelect(getIdx()); });
+        row.querySelector('.move-up').addEventListener('click', () => moveRow(getIdx(), -1));
+        row.querySelector('.move-down').addEventListener('click', () => moveRow(getIdx(), 1));
+        row.querySelector('.del-btn').addEventListener('click', () => deleteRow(getIdx()));
+
+        if (isSelected) row.classList.add('selected');
+
+        // border-left は非表示
+
+        if (currentTabConfig.style === 'style-secret') {
+            const translucentColor = currentTabConfig.color + '44';
+            row.style.setProperty('background-color', translucentColor, 'important');
+            row.style.setProperty('color', '#ccc', 'important');
+        }
+
+        const ta = row.querySelector('textarea');
+        if (ta) {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        }
+    }
+    function toggleSelect(index) {
+        const targetTab = logData[index].tab;
+        const pos = selectedIndices.indexOf(index);
+        if (pos > -1) {
+            selectedIndices.splice(pos, 1);
+            lastSelectedIndex = -1;
+        } else {
+            if (lastSelectedIndex !== -1 && lastSelectedIndex < index) {
+                for (let i = lastSelectedIndex; i <= index; i++) {
+                    if (logData[i].tab === targetTab) {
+                        if (!selectedIndices.includes(i)) selectedIndices.push(i);
+                    }
+                }
+            } else {
+                selectedIndices.push(index);
+            }
+            lastSelectedIndex = index;
+        }
+        const panel = document.getElementById('groupPanel');
+        const settings = document.getElementById('editorSettings');
+        const info = document.getElementById('selectionInfo');
+        if (selectedIndices.length > 0) {
+            settings.style.display = 'block';
+            panel.style.display = 'block';
+            info.innerText = `${selectedIndices.length}件を選択中`;
+        } else {
+            panel.style.display = 'none';
+        }
+        renderEditor();
+    }
+
+    function deleteRow(index) {
+        if (!confirm("この行を削除しますか？")) return;
+        logData.splice(index, 1);
+        renderEditor(true);
+    }
+
+    function deleteSelectedRows() {
+        if (selectedIndices.length === 0) return;
+        if (!confirm(`${selectedIndices.length}件の行を削除しますか？`)) return;
+        const remainingData = [];
+        const movingSet = new Set(selectedIndices);
+        for (let i = 0; i < logData.length; i++) {
+            if (!movingSet.has(i)) remainingData.push(logData[i]);
+        }
+        logData = remainingData;
+        selectedIndices = [];
+        lastSelectedIndex = -1;
+        document.getElementById('groupPanel').style.display = 'none';
+        renderEditor(true);
+    }
+
+    function moveRow(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= logData.length) return;
+        const container = document.getElementById('logEditor');
+        const rowA = document.getElementById(`row-${index}`);
+        const rowB = document.getElementById(`row-${newIndex}`);
+        if (direction === 1) container.insertBefore(rowB, rowA);
+        else container.insertBefore(rowA, rowB);
+        rowA.id = `row-temp`;
+        rowB.id = `row-${index}`;
+        rowA.id = `row-${newIndex}`;
+        updateRowIndex(rowA, newIndex);
+        updateRowIndex(rowB, index);
+        const temp = logData[index];
+        logData[index] = logData[newIndex];
+        logData[newIndex] = temp;
+        if (selectedIndices.includes(index)) {
+            selectedIndices = selectedIndices.map(i => i === index ? newIndex : (i === newIndex ? index : i));
+        } else if (selectedIndices.includes(newIndex)) {
+            selectedIndices = selectedIndices.map(i => i === newIndex ? index : i);
+        }
+    }
+
+    function updateRowIndex(row, newIdx) {
+        // data-index属性を更新するだけでOK。イベントリスナーはgetIdx()で最新値を参照する
+        row.dataset.index = newIdx;
+        const cb = row.querySelector('.row-checkbox');
+        const lbl = row.querySelector('.select-label');
+        if (cb) cb.id = 'check-' + newIdx;
+        if (lbl) lbl.setAttribute('for', 'check-' + newIdx);
+    }
+
+    function moveGroup(direction) {
+        if (selectedIndices.length === 0) return;
+        selectedIndices.sort((a, b) => a - b);
+        if (direction === -1 && selectedIndices[0] === 0) return;
+        if (direction === 1 && selectedIndices[selectedIndices.length - 1] === logData.length - 1) return;
+        const loopRange = direction === -1 ? selectedIndices : [...selectedIndices].reverse();
+        loopRange.forEach(idx => moveRow(idx, direction));
+    }
+
+    function groupAndMove() {
+        if (selectedIndices.length === 0) return;
+        selectedIndices.sort((a, b) => a - b);
+        const targetIdx = selectedIndices[0];
+        const movingItems = selectedIndices.map(i => logData[i]);
+        const newData = []; const movingSet = new Set(selectedIndices);
+        for (let i = 0; i < logData.length; i++) {
+            if (i === targetIdx) newData.push(...movingItems);
+            if (!movingSet.has(i)) newData.push(logData[i]);
+        }
+        logData = newData; 
+        selectedIndices = Array.from({length: movingItems.length}, (_, i) => targetIdx + i);
+        renderEditor(true);
+    }
+
+    function clearSelection() { selectedIndices = []; lastSelectedIndex = -1; document.getElementById('groupPanel').style.display = 'none'; renderEditor(); }
+
+    function toggleAnchor(index, checked) {
+        if (!checked) logData[index].anchor = '';
+        renderAnchorPanel();
+    }
+
+    function renderAnchorPanel() {
+        const panel = document.getElementById('anchorPanel');
+        const list  = document.getElementById('anchorList');
+        const count = document.getElementById('anchorCount');
+        if (!panel || !list) return;
+
+        // 目次が設定されている行だけ抽出
+        const anchors = logData
+            .map((item, idx) => ({ idx, anchor: item.anchor }))
+            .filter(a => a.anchor && a.anchor.trim());
+
+        count.textContent = anchors.length;
+        panel.classList.toggle('has-items', anchors.length > 0);
+
+        list.innerHTML = '';
+        anchors.forEach((a, n) => {
+            const el = document.createElement('div');
+            el.className = 'anchor-list-item';
+            el.innerHTML = `<span class="anchor-list-num">${n + 1}</span><span class="anchor-list-name">${a.anchor}</span>`;
+            el.addEventListener('click', () => {
+                const row = document.getElementById('row-' + a.idx);
+                if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            list.appendChild(el);
+        });
+    }
+    function populateAutoIndexTab() {
+        const sel = document.getElementById('autoIndexTab');
+        if (!sel) return;
+        const tabs = Object.keys(tabStyleMap);
+        const prev = sel.value;
+        sel.innerHTML = '<option value="__all__">すべてのタブ</option>' +
+            tabs.map(t => `<option value="${t}" ${t === prev ? 'selected' : ''}>${t}</option>`).join('');
+    }
+
+    function autoDetectScenes() {
+        if (logData.length === 0) { showToast('ログが読み込まれていません'); return; }
+
+        const keywordsRaw = document.getElementById('sceneKeywords').value;
+        const targetTab   = document.getElementById('autoIndexTab').value;
+        const clearFirst  = document.getElementById('autoIndexClearFirst').checked;
+
+        const keywords = keywordsRaw.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+
+        if (keywords.length === 0) {
+            showToast('キーワードを1つ以上入力してください');
+            return;
+        }
+
+        if (clearFirst) {
+            logData.forEach(item => { item.anchor = ''; });
+        }
+
+        let detected = 0;
+        let sceneNum  = 1;
+
+        // 既存の目次数を起点に (clearFirstがfalseの場合)
+        if (!clearFirst) {
+            sceneNum = logData.filter(item => item.anchor && item.anchor.trim()).length + 1;
+        }
+
+        logData.forEach((item, idx) => {
+            if (targetTab !== '__all__' && item.tab !== targetTab) return;
+
+            const content = item.content;
+            const matched = keywords.some(kw => content.includes(kw));
+
+            if (matched) {
+                // 既にanchorが設定済みならスキップ
+                if (!clearFirst && item.anchor && item.anchor.trim()) return;
+
+                // コンテンツからシーン名を生成: キーワードを含む最初の行を抜粋
+                const firstLine = content.split('\n')[0].trim();
+                const sceneName = firstLine.length > 20
+                    ? firstLine.substring(0, 20) + '…'
+                    : firstLine || `Scene ${sceneNum}`;
+
+                item.anchor = `Scene ${sceneNum}：${sceneName}`;
+                sceneNum++;
+                detected++;
+
+                // DOMのanchorチェックボックスとinputを更新（レンダリング済みの行）
+                const row = document.getElementById('row-' + idx);
+                if (row) {
+                    const cb    = row.querySelector('.anchor-check');
+                    const input = row.querySelector('.anchor-input');
+                    if (cb)    { cb.checked = true; }
+                    if (input) { input.style.display = 'block'; input.value = item.anchor; }
+                }
+            }
+        });
+
+        // clearFirstの場合: anchorが外れた行のDOMも更新
+        if (clearFirst) {
+            logData.forEach((item, idx) => {
+                if (item.anchor) return; // 検出済み行はスキップ
+                const row = document.getElementById('row-' + idx);
+                if (!row) return;
+                const cb    = row.querySelector('.anchor-check');
+                const input = row.querySelector('.anchor-input');
+                if (cb)    cb.checked = false;
+                if (input) { input.style.display = 'none'; input.value = ''; }
+            });
+        }
+
+        renderAnchorPanel();
+
+        const resultEl = document.getElementById('autoIndexResult');
+        if (resultEl) {
+            resultEl.style.color = detected > 0 ? 'var(--accent)' : '#666';
+            resultEl.textContent = detected > 0
+                ? `✦ ${detected} 件のシーン転換を検出しました`
+                : '一致するシーンが見つかりませんでした';
+        }
+
+        if (detected > 0) showToast(`${detected} 件の目次を自動設定しました`);
+    }
+
+    function clearAllAnchors() {
+        if (!confirm('すべての目次をクリアしますか？')) return;
+        logData.forEach(item => { item.anchor = ''; });
+        document.querySelectorAll('.anchor-check').forEach(cb => { cb.checked = false; });
+        document.querySelectorAll('.anchor-input').forEach(inp => { inp.style.display = 'none'; inp.value = ''; });
+        renderAnchorPanel();
+        const resultEl = document.getElementById('autoIndexResult');
+        if (resultEl) { resultEl.style.color = '#666'; resultEl.textContent = '目次をすべてクリアしました'; }
+        showToast('目次をクリアしました');
+    }
+
+    function handleSearch() { currentSearchIdx = -1; renderEditor(); }
+    function navSearch(dir) {
+        if (searchMatches.length === 0) return;
+        currentSearchIdx = (currentSearchIdx + dir + searchMatches.length) % searchMatches.length;
+        const targetId = `row-${searchMatches[currentSearchIdx]}`;
+        document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+function handleReplace() {
+        const search = document.getElementById('searchInput').value;
+        const replace = document.getElementById('replaceInput').value;
+        if (!search) return;
+        if (!confirm(`「${search}」をすべて「${replace}」に置換しますか？`)) return;
+        
+        let changedCount = 0;
+
+        logData.forEach((item, index) => {
+            if (item.content.includes(search)) {
+                item.content = item.content.split(search).join(replace);
+                
+                const row = document.getElementById(`row-${index}`);
+                if (row) {
+                    const ta = row.querySelector('.row-content');
+                    ta.value = item.content;
+                    ta.style.height = 'auto';
+                    ta.style.height = ta.scrollHeight + 'px';
+                    changedCount++;
+                }
+            }
+        });
+
+        if (changedCount > 0) {
+            alert(`置換完了！ ${changedCount}件を置換しました。`);
+            document.getElementById('searchInput').value = '';
+            handleSearch();
+        } else {
+            alert('置換対象が見つかりませんでした。');
+        }
+    }
+
+function cleanUpLogData() {
+    const beforeCount = logData.length;
+
+    logData = logData.filter(item => {
+        const contentStr = String(item.content);
+        const hasDeletedText = contentStr.includes('削除済');
+        const isEmpty = !contentStr.trim();
+        
+        return !(hasDeletedText || isEmpty);
+    });
+
+    const afterCount = logData.length;
+    const diff = beforeCount - afterCount;
+
+    if (diff === 0) {
+        alert('掃除する行（削除済・空行）は見つかりませんでした。');
+    } else {
+        renderEditor(true);
+        alert(`掃除完了！\n不要な ${diff} 行をリストから完全に消去しました🦑`);
+    }
+}
+
+function applyRubyToRow(index, type) {
+    const row = document.getElementById('row-' + index);
+    if (!row) return;
+    const textarea = row.querySelector('.row-content');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+
+    let newText;
+    let newCursorPos;
+
+    if (type === '｜') {
+        newText = text.substring(0, start) + '｜' + selectedText + text.substring(end);
+        newCursorPos = start + (selectedText ? selectedText.length + 1 : 1);
+    } else if (type === '《》') {
+        newText = text.substring(0, start) + '《' + selectedText + '》' + text.substring(end);
+        newCursorPos = selectedText ? end + 2 : start + 1;
+    }
+
+    textarea.value = newText;
+    logData[index].content = newText;
+    
+    textarea.focus();
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+}
+
+// ── 途中保存 / 読み込み ──────────────────────────────
+
+const SAVE_KEY = 'ikatoolbox_save';
+
+function saveProgress() {
+    if (logData.length === 0) {
+        showToast('保存するデータがありません');
+        return;
+    }
+    const state = {
+        savedAt: new Date().toLocaleString('ja-JP'),
+        logTitleInput: document.getElementById('logTitleInput').value,
+        fileNameInput: document.getElementById('fileNameInput').value,
+        systemSelect: document.getElementById('systemSelect').value,
+        customSystemInput: document.getElementById('customSystemInput').value,
+        generatorArchiveMeta: normalizeGeneratorArchiveMeta(generatorArchiveMeta),
+        logData: logData,
+        charSettings: charSettings,
+        tabStyleMap: tabStyleMap
+    };
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+        updateSaveStatus(state.savedAt);
+        showToast('💾 途中保存しました');
+    } catch(e) {
+        alert('保存に失敗しました。ブラウザのストレージ容量を確認してください。\n' + e.message);
+    }
+}
+
+function loadProgress(state) {
+    if (!state) {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) { showToast('保存データが見つかりません'); return; }
+        try { state = JSON.parse(raw); } catch(e) { alert('データの読み込みに失敗しました。'); return; }
+    }
+    if (!state.logData || state.logData.length === 0) {
+        showToast('有効なデータがありません');
+        return;
+    }
+    if (logData.length > 0 && !confirm('現在の編集内容は破棄されます。読み込みますか？')) return;
+
+    logData       = state.logData       || [];
+    charSettings  = state.charSettings  || {};
+    tabStyleMap   = state.tabStyleMap   || {};
+    generatorArchiveMeta = normalizeGeneratorArchiveMeta(state.generatorArchiveMeta || {});
+    selectedIndices = [];
+    lastSelectedIndex = -1;
+
+    document.getElementById('logTitleInput').value      = state.logTitleInput      || '';
+    document.getElementById('fileNameInput').value      = state.fileNameInput      || '';
+    document.getElementById('systemSelect').value       = state.systemSelect       || 'CUSTOM';
+    document.getElementById('customSystemInput').value  = state.customSystemInput  || '';
+    toggleCustomSystem(state.systemSelect || 'CUSTOM');
+
+    document.getElementById('emptyState').style.display    = 'none';
+    document.getElementById('postUploadControls').style.display = 'block';
+    setActionButtonsEnabled(true);
+
+    renderCharConfigs();
+    renderTabSettings();
+    renderEditor(true);
+    renderAnchorPanel();
+    updateSaveStatus(state.savedAt);
+    showToast('📂 データを復元しました');
+}
+
+function exportSaveJson() {
+    // 現在の編集状態を直接JSONに落とす（保存操作不要）
+    if (logData.length === 0) { showToast('書き出すデータがありません'); return; }
+    const state = {
+        savedAt: new Date().toLocaleString('ja-JP'),
+        logTitleInput: document.getElementById('logTitleInput').value,
+        fileNameInput: document.getElementById('fileNameInput').value,
+        systemSelect: document.getElementById('systemSelect').value,
+        customSystemInput: document.getElementById('customSystemInput').value,
+        generatorArchiveMeta: normalizeGeneratorArchiveMeta(generatorArchiveMeta),
+        logData: logData,
+        charSettings: charSettings,
+        tabStyleMap: tabStyleMap
+    };
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const fname = (document.getElementById('fileNameInput').value || 'save') + '_ikatoolbox.json';
+    a.download = fname;
+    a.click();
+    showToast('JSONを書き出しました');
+}
+
+function importSaveJson(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const state = JSON.parse(e.target.result);
+            if (!state.logData) throw new Error('logDataが見つかりません');
+            localStorage.setItem(SAVE_KEY, e.target.result);
+            loadProgress(state);
+        } catch (err) {
+            alert('JSONの読み込みに失敗しました:\n' + err.message);
+        }
+    };
+    reader.readAsText(file);
+    // 同じファイルを再選択できるようリセット
+    file = null;
+    document.getElementById('importJsonFile').value = '';
+}
+
+function updateSaveStatus(savedAt) {
+    const el = document.getElementById('saveStatusText');
+    if (el) el.textContent = savedAt ? `最終保存: ${savedAt}` : '保存データなし';
+    const btn = document.getElementById('loadProgressBtn');
+    if (btn) btn.disabled = !localStorage.getItem(SAVE_KEY);
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('saveToast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ────────────────────────────────────────────────────
+
+function archiveSafeName(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))).replace(/=/g, "");
+}
+
+function archiveHexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function archiveRowContent(content) {
+    return String(content || '')
+        .split('\n').join('<br>')
+        .replace(/[｜|]([^｜|《》]+)《([^《》]+)》/g, '<ruby>$1<rt>$2</rt></ruby>')
+        .replace(/([^ \n\t｜|《》]+)《([^《》]+)》/g, '<ruby>$1<rt>$2</rt></ruby>');
+}
+
+function buildArchiveJSON() {
+    const title = document.getElementById('logTitleInput').value || 'LOG';
+    const systemSelectVal = document.getElementById('systemSelect').value;
+    const system = systemSelectVal === 'CUSTOM'
+        ? (document.getElementById('customSystemInput').value || 'LOG ARCHIVE')
+        : systemSelectVal;
+    let customCSS = '';
+    Object.keys(tabStyleMap).forEach(tabName => {
+        const config = tabStyleMap[tabName];
+        const safeName = archiveSafeName(tabName);
+        const mainColor = config.color;
+        if (config.style === 'style-secret') {
+            const bgColor = archiveHexToRgba(mainColor, 0.12);
+            customCSS += `.tab-custom-${safeName} { background: ${bgColor} !important; border-left: 3px solid ${mainColor} !important; margin: 10px 15px; padding: 15px 20px; border-radius: 4px; }\n`;
+        } else if (config.style === 'style-info') {
+            customCSS += `.tab-custom-${safeName} { background: var(--block-bg); margin: 30px 15px; padding: 25px; border-radius: 4px; border: 1px solid #222; } .tab-custom-${safeName} .info-separator { display: block; height: 1px; background: #444 !important; margin: 2px 0 8px; border: none; opacity: 0.8; }\n`;
+        }
+    });
+    const mainTabEntry = Object.values(tabStyleMap).find(t => t.style === 'style-default');
+    const mainTabColor = mainTabEntry ? mainTabEntry.color : '#C5373C';
+    const isGray = (col) => /^#(888|888888|aaaaaa|999|999999|666|666666)$/i.test(col);
+    const rows = logData.map((item, i) => {
+        const char = charSettings[item.charKey] || { displayName: '', color: '#888888' };
+        const config = tabStyleMap[item.tab] || { style: 'style-default', color: mainTabColor };
+        const isSystem = (char.displayName && char.displayName.toLowerCase() === 'system');
+        const content = archiveRowContent(item.content);
+        if (isSystem) return { id: `log-${i}`, s: 1, content };
+        const charColor = isGray(char.color) ? mainTabColor : char.color;
+        const style = (config.style || 'style-default').replace(/^style-/, '') || 'default';
+        const row = { id: `log-${i}`, style, name: char.displayName || '', color: charColor, tab: item.tab || 'main', content };
+        if (config.style === 'style-chat') row.ncm = 'row';
+        if (config.style === 'style-secret' || config.style === 'style-info') row.tabCustom = `tab-custom-${archiveSafeName(item.tab || 'main')}`;
+        return row;
+    });
+    const index = logData.map((item, i) => item.anchor ? { id: `log-${i}`, label: item.anchor } : null).filter(Boolean);
+    const data = { v: 2, title, brand: 'SESSION LOG', system, index, rows };
+    if (customCSS) data.customCSS = customCSS;
+    return data;
+}
+
+async function archiveCompress(str) {
+    if (typeof CompressionStream === 'undefined') return { data: str, compressed: false };
+    const bytes = new TextEncoder().encode(str);
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+    const buf = await new Response(stream).arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    return { data: b64, compressed: true, originalSize: bytes.length, size: buf.byteLength };
+}
+
+function archiveQuickHash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) { h = (h << 5) - h + str.charCodeAt(i); h |= 0; }
+    return (h >>> 0).toString(16) + '_' + str.length;
+}
+
+function openArchiveDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open('TRPGArchiveV4', 1);
+        req.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs', { keyPath: 'id' });
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+    });
+}
+
+function putArchiveBlob(db, id, data) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('blobs', 'readwrite');
+        tx.objectStore('blobs').put({ id, data });
+        tx.oncomplete = resolve;
+        tx.onerror = e => reject(e.target.error);
+    });
+}
+
+async function uploadToArchiveDirect() {
+    if (!logData.length) { showToast('ログを読み込んでください'); return; }
+    const btn = document.getElementById('archiveExportBtn');
+    if (btn) btn.disabled = true;
+    try {
+        const archiveData = buildArchiveJSON();
+        const jsonStr = JSON.stringify(archiveData);
+        const comp = await archiveCompress(jsonStr);
+        const id = `log_${Date.now()}`;
+        const fileBase = document.getElementById('fileNameInput').value || 'log';
+        generatorArchiveMeta = normalizeGeneratorArchiveMeta(generatorArchiveMeta);
+        const logMeta = {
+            id,
+            title: archiveData.title,
+            system: archiveData.system,
+            pl: generatorArchiveMeta.pl,
+            sessions: generatorArchiveMeta.sessions,
+            folder: generatorArchiveMeta.folder,
+            date: generatorArchiveMeta.date,
+            filename: `${fileBase}.html`,
+            hash: archiveQuickHash(jsonStr),
+            favorite: false,
+            tags: parseArchiveTags(generatorArchiveMeta.tags),
+            note: generatorArchiveMeta.note
+        };
+
+        const db = await openArchiveDB();
+        await putArchiveBlob(db, id, { ...comp, format: 'json_v1' });
+        db.close();
+
+        const current = JSON.parse(localStorage.getItem(ARCHIVE_META_KEY) || '{}');
+        const logs = Array.isArray(current.logs) ? current.logs : [];
+        logs.unshift(logMeta);
+        const totalOrig = (current.totalOrig || 0) + (comp.originalSize || jsonStr.length);
+        const totalSaved = (current.totalSaved || 0) + (comp.size || jsonStr.length);
+        localStorage.setItem(ARCHIVE_META_KEY, JSON.stringify({
+            folders: current.folders || [],
+            logs,
+            totalOrig,
+            totalSaved,
+            firebase: current.firebase || undefined
+        }));
+
+        showToast('ARCHIVEに登録しました。アーカイブ画面に戻ると反映されます');
+    } catch (err) {
+        alert('ARCHIVEへの直接登録に失敗しました: ' + err.message);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function exportLog() {
+    const h1Title = document.getElementById('logTitleInput').value || 'LOG';
+    const fileName = document.getElementById('fileNameInput').value || 'log';
+    const systemSelectVal = document.getElementById('systemSelect').value;
+    const headerTitle = systemSelectVal === 'CUSTOM' ? 
+        document.getElementById('customSystemInput').value || 'LOG ARCHIVE' : 
+        systemSelectVal;
+
+    let dynamicAccent = "#C5373C"; 
+    if (tabStyleMap['main']) {
+        dynamicAccent = tabStyleMap['main'].color;
+    } else {
+        const firstTab = Object.keys(tabStyleMap)[0];
+        if (firstTab) dynamicAccent = tabStyleMap[firstTab].color;
+    }
+
+    const hexToRgba = (hex, alpha) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    const getSafeName = (str) => {
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))).replace(/=/g, "");
+    };
+
+    let customTabStyles = "";
+    Object.keys(tabStyleMap).forEach(tabName => {
+        const config = tabStyleMap[tabName];
+        const safeName = getSafeName(tabName);
+        const mainColor = config.color;
+        if (config.style === 'style-secret') {
+            const bgColor = hexToRgba(mainColor, 0.12);
+            customTabStyles += `.tab-custom-${safeName} { background: ${bgColor} !important; border-left: 3px solid ${mainColor} !important; margin: 10px 15px; padding: 15px 20px; border-radius: 4px; }`;
+        } else if (config.style === 'style-info') {
+            customTabStyles += `.tab-custom-${safeName} { background: var(--block-bg); margin: 30px 15px; padding: 25px; border-radius: 4px; border: 1px solid #222; } .tab-custom-${safeName} .info-separator { display: block; height: 1px; background: #444 !important; margin: 2px 0 8px; border: none; opacity: 0.8; }`;
+        }
+    });
+
+    let html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>${h1Title}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"><style>
+    :root { --outer-bg: #0f0f0f; --inner-bg: #050505; --block-bg: #111111; --text: #dbdee1; --accent: ${dynamicAccent}; --sub-line: #444; --border: #222; --tab-text: #666; --chat-text: #8a8a8a; --container-width: 680px; } 
+    html, body { min-height: 100%; } body { background: var(--outer-bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; margin: 0; padding: 0; line-height: 1.7; display: flex; flex-direction: column; align-items: center; } 
+    
+    header { position: fixed; top: 0; left: 0; width: 100%; background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(12px); z-index: 1000; border-bottom: 1px solid var(--border); display: flex; justify-content: center; padding: 0; } 
+    .header-inner { width: 90%; max-width: var(--container-width); height: calc(60px + env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; padding-top: env(safe-area-inset-top); box-sizing: border-box; } 
+    .header-title { font-family: 'Montserrat'; font-weight: 900; font-size: 0.85rem; color: #fff; letter-spacing: 0.2em; text-transform: uppercase; } 
+.style-info .row-header { margin-bottom: 0px !important; }
+
+    .nav-uncheck { display: none; } 
+    .nav-open { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--accent); border-radius: 4px; position: relative; z-index: 1001; } 
+    .nav-open span, .nav-open span:before, .nav-open span:after { content: ''; display: block; height: 2px; width: 18px; background: #fff; position: absolute; transition: 0.3s; } 
+    .nav-open span:before { top: -6px; } .nav-open span:after { bottom: -6px; } 
+
+    .nav-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 1500; } 
+    .nav-uncheck:checked ~ .nav-overlay { opacity: 1; visibility: visible; } 
+
+    .nav-content { position: fixed; top: 0; right: -320px; width: 280px; height: 100vh; height: 100dvh; background: #0a0a0a; transition: 0.4s; z-index: 2000; border-left: 1px solid #222; overflow: hidden; visibility: hidden; padding-top: env(safe-area-inset-top); box-sizing: border-box; display: flex; flex-direction: column; } 
+    .nav-uncheck:checked ~ .nav-content { right: 0; visibility: visible; } 
+
+    .nav-section { padding: 30px 20px 10px; border-bottom: 1px solid #222; flex-shrink: 0; } 
+    .nav-section:last-child { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; border-bottom: none; padding-bottom: calc(20px + env(safe-area-inset-bottom)); } 
+    .nav-label { font-family: 'Montserrat'; font-weight: 900; font-size: 0.6rem; color: var(--accent); margin-bottom: 15px; display: block; } 
+    
+    .filter-btn { appearance: none; -webkit-appearance: none; display: inline-block; padding: 8px 14px; margin: 4px; font-size: 0.7rem; font-weight: bold; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; color: #888; cursor: pointer; border: 1px solid transparent; } 
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); } 
+    .index-link { display: block; color: #ccc; text-decoration: none; padding: 15px 20px; font-size: 0.8rem; border-bottom: 1px solid #1a1a1a; } 
+
+    .container.hide-style-default .style-default { display: none !important; }
+    .container.hide-style-info .style-info { display: none !important; }
+    .container.hide-style-secret .style-secret { display: none !important; }
+    .container.hide-style-chat .style-chat { display: none !important; }
+
+    .container { width: 100%; max-width: var(--container-width); background: var(--inner-bg); flex: 1; display: flex; flex-direction: column; min-height: 100vh; padding-top: calc(60px + env(safe-area-inset-top)); } .container-body { flex: 1; } 
+    .log-row { padding: 12px 25px; border-bottom: 1px dashed #1a1a1a; } 
+    .row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; } 
+    .row-name { font-weight: 900; font-size: 0.85rem; color: #fff; display: flex; align-items: center; gap: 8px; } 
+    .name-line { width: 3px; height: 1em; background: var(--sub-line); } 
+    .row-tab { font-family: 'Montserrat'; font-weight: 700; font-size: 0.55rem; color: var(--tab-text); } 
+    .row-content { font-size: 0.95rem; color: #ccc; white-space: pre-wrap; } 
+    
+    .hero-title-area { padding: 40px 25px 25px; border-bottom: 1px solid #111; } 
+    .hero-brand { font-family: 'Montserrat'; font-size: 0.6rem; font-weight: 900; color: var(--accent); letter-spacing: 0.5em; display: block; } 
+    .hero-title { font-family: 'Montserrat', 'Noto Sans JP'; font-size: 1.5rem; font-weight: 900; color: #fff; border-left: 3px solid var(--accent); padding-left: 15px; } 
+
+    .style-chat { margin-left: 10%; border-left: 1px solid #222; padding: 10px 15px; opacity: 0.8; } 
+    .row-system { padding: 2.2em 25px !important; font-style: italic; color: #aaa; } 
+    .info-separator { display: none; } 
+
+    ${customTabStyles} 
+    footer { text-align: center; padding: 60px 32px calc(60px + env(safe-area-inset-bottom)); font-family: 'Montserrat'; font-size: 0.6rem; opacity: 0.2; margin-top: auto; } 
+    [id^="log-"] { scroll-margin-top: calc(80px + env(safe-area-inset-top)); } 
+    </style></head><body>
+    
+    <input id="nav-input" type="checkbox" class="nav-uncheck">
+    <label for="nav-input" class="nav-overlay"></label>
+    
+    <header>
+        <div class="header-inner">
+            <div class="header-title">${headerTitle}</div>
+            <label for="nav-input" class="nav-open"><span></span></label>
+        </div>
+    </header>
+
+    <div class="nav-content">
+        <div class="nav-section">
+            <span class="nav-label">FILTER</span>
+            <div id="filter-container">
+                <button class="filter-btn active" onclick="toggleTab('style-default', this)">MAIN</button>
+                <button class="filter-btn active" onclick="toggleTab('style-info', this)">INFO</button>
+                <button class="filter-btn active" onclick="toggleTab('style-secret', this)">SECRET</button>
+                <button class="filter-btn active" onclick="toggleTab('style-chat', this)">CHAT</button>
+            </div>
+        </div>
+        <div class="nav-section" style="border:none;">
+            <span class="nav-label">INDEX</span>
+            <div id="index-list">`;
+
+    logData.forEach((item, i) => { 
+        if (item.anchor) html += `<a href="#log-${i}" class="index-link" onclick="closeMenu()">${item.anchor}</a>`; 
+    });
+
+    html += `</div></div></div>
+
+    <div class="container">
+        <div class="container-body">
+        <div class="hero-title-area">
+            <span class="hero-brand">SESSION LOG</span>
+            <div class="hero-title">${h1Title}</div>
+        </div>`;
+
+    // #888系カラーをメインタブカラーで代替
+    const mainTabEntry = Object.values(tabStyleMap).find(t => t.style === 'style-default');
+    const mainTabColor = mainTabEntry ? mainTabEntry.color : '#C5373C';
+    const isGray = (col) => /^#(888|888888|aaaaaa|999|999999|666|666666)$/i.test(col);
+
+    logData.forEach((item, i) => {
+        const char = charSettings[item.charKey];
+        const config = tabStyleMap[item.tab];
+        const safeName = getSafeName(item.tab);
+        let styleClass = config.style;
+        if (config.style === 'style-secret' || config.style === 'style-info') styleClass += ` tab-custom-${safeName}`;
+        
+        const isSystem = (char.displayName && char.displayName.toLowerCase() === 'system');
+        if (isSystem) styleClass += ' row-system';
+
+        // #888系カラーはメインタブカラーで代替
+        const charColor = isGray(char.color) ? mainTabColor : char.color;
+        
+        let nameStyle = config.style === 'style-chat' ? `style="color:${charColor}"` : "";
+        let lineStyle = (config.style === 'style-chat' || isSystem) ? `style="display:none;"` : `style="background:${charColor}"`;
+        if (item.tab.toLowerCase() === 'info') lineStyle = `style="background:${config.color}"`;
+        const tabNameDisplay = isSystem ? '' : item.tab;
+        const nameDisplay = isSystem ? '' : char.displayName;
+        const safeContent = item.content
+            .split('\\n').join('<br>')
+            .replace(/[｜|]([^｜|《》]+)《([^《》]+)》/g, '<ruby>$1<rt>$2</rt></ruby>')
+            .replace(/([^ \n\t｜|《》]+)《([^《》]+)》/g, '<ruby>$1<rt>$2</rt></ruby>');
+
+
+        html += `<div class="log-row ${styleClass}" id="log-${i}"><div class="row-header"><div class="row-name" ${nameStyle}><span class="name-line" ${lineStyle}></span>${nameDisplay}</div><div class="row-tab">${tabNameDisplay}</div></div><hr class="info-separator"><div class="row-content">${safeContent}</div></div>`;
+    });
+
+    html += `</div></div><footer>✦ IKATOOLBOX</footer>
+    <script>
+    function closeMenu() {
+        document.getElementById('nav-input').checked = false;
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+    }
+
+    document.getElementById('nav-input').addEventListener('change', function() {
+        const lock = this.checked ? 'hidden' : '';
+        document.body.style.overflow = lock;
+        document.documentElement.style.overflow = lock;
+    });
+
+    function toggleTab(styleClass, btn) {
+        btn.classList.toggle('active');
+        const isVisible = btn.classList.contains('active');
+        const container = document.querySelector('.container');
+        if (container) {
+            if (isVisible) container.classList.remove('hide-' + styleClass);
+            else container.classList.add('hide-' + styleClass);
+        }
+    }
+<\\\/script></body></html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a'); 
+    a.href = URL.createObjectURL(blob); 
+    a.download = fileName + ".html"; 
+    a.click();
+}
+</script>
+
+<div id="saveToast"></div>
+
+<div style="position: fixed; bottom: 10px; right: 15px; font-family: sans-serif; font-size: 10px; color: rgba(255,255,255,0.1); letter-spacing: 0.1em; font-weight: bold; pointer-events: none; z-index: 9999;">✦ IKATOOLBOX</div>
+</body>
+</html>

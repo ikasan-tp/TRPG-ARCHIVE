@@ -135,6 +135,8 @@ body::after {
 .btn-cloud { font-family:'Montserrat'; font-weight:700; font-size:.6rem; padding:6px 11px; background:transparent; border:1px solid #1a3a6a; border-radius:2px; color:#4a7aaa; cursor:pointer; letter-spacing:.1em; transition:all .2s; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
 .btn-cloud:hover { border-color:#3a6aaa; color:#8ab0d8; background:rgba(26,58,106,.15); }
 .btn-p, .btn-g, .btn-cloud { min-height:34px; justify-content:center; }
+.tool-link { text-decoration:none; }
+.tool-link svg { flex-shrink:0; }
 
 /* share dropdown */
 .share-wrap { position:relative; }
@@ -284,7 +286,9 @@ body::after {
 .cgrid.list .card-sys { margin-bottom:0; min-width:82px; }
 .cgrid.list .card-ttl { margin-bottom:0; flex:1; }
 .cgrid.list .card-tags { margin-bottom:0; }
-.cgrid.list .card-foot { border:none; padding:0; flex-shrink:0; }
+.cgrid.list .card-foot { border:none; padding:0 14px 0 14px; flex-shrink:0; min-width:150px; justify-content:flex-end; gap:16px; border-left:1px solid #111; }
+.cgrid.list .card-date { min-width:68px; text-align:right; letter-spacing:.04em; }
+.cgrid.list .card-sess { min-width:42px; justify-content:flex-end; gap:4px; white-space:nowrap; }
 
 .empty { grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 30px; gap:10px; text-align:center; opacity:.3; }
 .empty-g { font-family:'Montserrat'; font-weight:900; font-size:3rem; color:#181818; line-height:1; }
@@ -556,6 +560,8 @@ body::after {
   .cgrid { grid-template-columns:1fr; }
   #deco { display:none; }
   .hdr-right .share-wrap { display:none; }
+  .tool-link { padding:6px 9px; }
+  .tool-link-label { display:none; }
   #toast { bottom:calc(78px + var(--safe-b)); right:12px; left:12px; max-width:none; }
 }
 
@@ -629,6 +635,7 @@ html[data-theme="light"] .ctag.pl { color:#78238C; }
 html[data-theme="light"] .card-foot { border-top-color:#eeecf1; }
 html[data-theme="light"] .card-date { color:#c4c1cb; }
 html[data-theme="light"] .card-sess { color:#a8a4b0; }
+html[data-theme="light"] .cgrid.list .card-foot { border-left-color:#eeeaf2; }
 html[data-theme="light"] .cact { background:#faf9fb; border-color:#e6e4ea; color:#a8a4b0; }
 html[data-theme="light"] .cact:hover { color:#333; border-color:#b8b5bf; }
 
@@ -816,6 +823,10 @@ html[data-theme="light"] .dup-warn { background:rgba(110,90,26,.08); color:#8a6d
       <input type="file" id="import-bundle-input" accept=".trpgarchive.json,.json" style="display:none" onchange="importBundle(this.files[0])">
     </div>
 
+    <a class="btn-g tool-link" href="generator.html" title="ログ生成ツールを開く" aria-label="ログ生成ツールを開く">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M8.5 1.5l1 1M1.5 8.5l1 1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      <span class="tool-link-label">GENERATOR</span>
+    </a>
     <button class="btn-p" onclick="openImportModal()">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="1" x2="5" y2="9" stroke="white" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="5" x2="9" y2="5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
       IMPORT
@@ -1507,6 +1518,13 @@ function renderStats(){
   document.getElementById('comp-info').textContent=totalOrig>0?`${ratio}% reduced`:CAN_COMPRESS?'gzip ready':'unavail.';
 }
 function renderAll(){renderFolders();renderCards();renderRecent();renderStats();}
+
+function refreshArchiveFromExternalChange(){
+  if(document.getElementById('log-view')?.classList.contains('open'))return;
+  loadMeta();
+  renderAll();
+  hydrateSearchIndex();
+}
 
 function stripHTMLText(html){
   const tmp=document.createElement('div');
@@ -2529,6 +2547,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){if(document.getElementById('log-view').classList.contains('open')){navigateToList();return;}document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));closeSidebar();}
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('srch').focus();}
 });
+window.addEventListener('focus', refreshArchiveFromExternalChange);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshArchiveFromExternalChange();});
+window.addEventListener('storage',e=>{if(e.key==='trpg_meta_v4')refreshArchiveFromExternalChange();});
 
 /* ══════════════════════════════════════════════
    THEME — ライト/ダークモード
