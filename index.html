@@ -1281,6 +1281,8 @@ let S={folders:[],logs:[],sysFilter:'ALL',folderFilter:'ALL',view:'grid'};
 let pendingHTML=null,pendingFile=null,pendingHash=null;
 let totalOrig=0,totalSaved=0;
 let fbConnected=false;
+let autoCloudUploadRunning=false;
+let autoCloudUploadQueued=false;
 const searchCache = {};
 let searchIndexing = false;
 
@@ -2161,6 +2163,7 @@ async function confirmImport(){
     closeModal('import-modal');
     renderAll();
     toast(`「${title}」を登録しました`);
+    queueAutoCloudUpload(`登録: ${title}`);
     setTimeout(()=>setProgress(0), 800);
   }catch(err){
     setProgress(0);
@@ -2414,36 +2417,66 @@ async function testFirebaseConnection(){
   document.getElementById('fb-test-btn').disabled=false;
 }
 
-async function cloudUploadAll(){
-  if(!fbConnected){toast('先に接続テストを実行してください');return;}
-  showExportOverlay('UPLOADING TO CLOUD…');
+function queueAutoCloudUpload(reason='変更'){
+  if(!fbConnected)return;
+  autoCloudUploadQueued=true;
+  if(autoCloudUploadRunning)return;
+  autoCloudUploadRunning=true;
+  setTimeout(async()=>{
+    try{
+      while(autoCloudUploadQueued && fbConnected){
+        autoCloudUploadQueued=false;
+        sysMsg('cloud',`自動クラウドアップロード開始: ${reason}`);
+        await cloudUploadAll({auto:true});
+      }
+    }finally{
+      autoCloudUploadRunning=false;
+      if(autoCloudUploadQueued && fbConnected)queueAutoCloudUpload('再実行');
+    }
+  },300);
+}
+
+async function cloudUploadAll(options={}){
+  const auto=options.auto===true;
+  if(!fbConnected){
+    if(!auto)toast('先に接続テストを実行してください');
+    return false;
+  }
+  if(!auto)showExportOverlay('UPLOADING TO CLOUD…');
   try{
     // Upload meta
-    updExport(10,'メタデータをアップロード中…');
+    if(!auto)updExport(10,'メタデータをアップロード中…');
     await firestoreSet('archive/meta',{folders:{stringValue:JSON.stringify(S.folders)},logs:{stringValue:JSON.stringify(S.logs)},updatedAt:{stringValue:new Date().toISOString()}});
     // Upload blobs
     for(let i=0;i<S.logs.length;i++){
-      updExport(10+Math.round((i/S.logs.length)*80),`${i+1}/${S.logs.length}: ${S.logs[i].title}`);
+      if(!auto)updExport(10+Math.round((i/S.logs.length)*80),`${i+1}/${S.logs.length}: ${S.logs[i].title}`);
       const data=await dbGet(S.logs[i].id);
       if(data){
         await firestoreSet(`archive/blobs/items/${S.logs[i].id}`,{data:{stringValue:JSON.stringify(data)},logId:{stringValue:S.logs[i].id}});
       }
     }
-    updExport(95,'共有リンク生成中…');
-    const{projectId}=fbConfig();
-    const shareUrl=`${location.origin}${location.pathname}?view=${projectId}&key=${encodeURIComponent(cfg.apiKey)}`;
+    if(!auto)updExport(95,'共有リンク生成中…');
+    const{projectId,apiKey}=fbConfig();
+    const shareUrl=`${location.origin}${location.pathname}?view=${projectId}&key=${encodeURIComponent(apiKey)}`;
     document.getElementById('share-link-display').textContent=shareUrl;
     document.getElementById('cloud-share-section').style.display='block';
     document.getElementById('cloud-menu-label').textContent='クラウド設定 (接続済)';
     document.getElementById('copy-share-link-item').style.display='flex';
-    updExport(100,'完了');
-    sysMsg('cloud',`クラウドアップロード完了: ${S.logs.length}件`);
-    setTimeout(hideExportOverlay,800);
-    toast(`${S.logs.length}件をクラウドに保存しました`);
+    if(!auto){
+      updExport(100,'完了');
+      sysMsg('cloud',`クラウドアップロード完了: ${S.logs.length}件`);
+      setTimeout(hideExportOverlay,800);
+      toast(`${S.logs.length}件をクラウドに保存しました`);
+    }else{
+      sysMsg('cloud',`自動クラウドアップロード完了: ${S.logs.length}件`);
+      toast('クラウドへ自動保存しました');
+    }
+    return true;
   }catch(err){
-    hideExportOverlay();
-    sysMsg('err','クラウドアップロード失敗: '+err.message);
-    toast('アップロードに失敗しました');
+    if(!auto)hideExportOverlay();
+    sysMsg('err',(auto?'自動':'')+'クラウドアップロード失敗: '+err.message);
+    toast(auto?'自動アップロードに失敗しました':'アップロードに失敗しました');
+    return false;
   }
 }
 
