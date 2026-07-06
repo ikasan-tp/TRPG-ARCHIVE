@@ -2001,13 +2001,14 @@ header{position:fixed;top:0;left:0;width:100%;background:rgba(5,5,5,.98);backdro
 .nav-open{width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--accent);border-radius:4px;z-index:1001;}
 .nav-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);opacity:0;visibility:hidden;transition:.3s;z-index:1500;}
 .nav-uncheck:checked~.nav-overlay{opacity:1;visibility:visible;}
-.nav-content{position:fixed;top:0;right:-320px;width:280px;height:100vh;height:100dvh;background:#0a0a0a;transition:.4s;z-index:2000;border-left:1px solid #222;overflow:hidden;visibility:hidden;padding-top:env(safe-area-inset-top);display:flex;flex-direction:column;overscroll-behavior:contain;}
+.nav-content{position:fixed;top:0;right:-320px;width:280px;height:100vh;height:100dvh;background:#0a0a0a;transition:.4s;z-index:2000;border-left:1px solid #222;overflow:hidden;visibility:hidden;padding-top:env(safe-area-inset-top);display:flex;flex-direction:column;min-height:0;overscroll-behavior:contain;}
 .nav-uncheck:checked~.nav-content{right:0;visibility:visible;}
 .nav-section{padding:28px 20px 10px;border-bottom:1px solid #222;flex-shrink:0;}
-.nav-section:last-child{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;border-bottom:none;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+.nav-section:last-child{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;border-bottom:none;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
 .nav-label{font-family:'Montserrat';font-weight:900;font-size:.6rem;color:var(--accent);margin-bottom:14px;display:block;letter-spacing:.3em;}
 .filter-btn{appearance:none;-webkit-appearance:none;display:inline-block;padding:8px 14px;margin:3px;font-size:.7rem;font-weight:bold;background:#1a1a1a;border:1px solid transparent;border-radius:20px;color:#888;cursor:pointer;transition:all .2s;}
 .filter-btn.active{background:var(--accent);color:#fff;}
+#index-list{min-height:0;}
 .index-link{display:block;color:#ccc;text-decoration:none;padding:14px 20px;font-size:.8rem;border-bottom:1px solid #1a1a1a;transition:background .15s;}
 .index-link:hover{background:rgba(120,35,140,.08);}
 .container{width:100%;max-width:var(--w);background:var(--inner-bg);flex:1;display:flex;flex-direction:column;min-height:100vh;padding-top:calc(60px + env(safe-area-inset-top));}
@@ -2205,6 +2206,14 @@ async function deleteLog(e,id){
 /* ══════════════════════════════════════════════
    LOG VIEWER
 ══════════════════════════════════════════════ */
+function ensureViewerMenuScroll(html){
+  return String(html||'')
+    .replace(/(\.nav-content\{[^}]*?flex-direction:column;)(?!min-height:0;)/, '$1min-height:0;')
+    .replace(/(\.nav-section:last-child\{[^}]*?flex:1;)(?!min-height:0;)/, '$1min-height:0;')
+    .replace(/(\.nav-section:last-child\{[^}]*?overflow-y:auto;)(?!-webkit-overflow-scrolling:touch;touch-action:pan-y;)/, '$1-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;')
+    .replace(/(\.index-link\{)/, '#index-list{min-height:0;}\n$1');
+}
+
 async function openLog(id){
   const log=S.logs.find(l=>l.id===id);
   if(!log){sysMsg('err','ログ未発見: '+id);return;}
@@ -2256,6 +2265,7 @@ async function openLog(id){
       viewerHTML = raw;
     }
 
+    viewerHTML = ensureViewerMenuScroll(viewerHTML);
     const blob=new Blob([viewerHTML],{type:'text/html;charset=utf-8'});
     const url=URL.createObjectURL(blob);
     const iframe=document.getElementById('log-iframe');
