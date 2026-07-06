@@ -1777,7 +1777,6 @@ function openFolderModal(){
 }
 function openCloudModal(){openModal('cloud-modal');}
 
-document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)closeModal(ov.id);}));
 
 function openEditModal(e,id){
   e.stopPropagation();
@@ -2544,7 +2543,7 @@ function hexToRgba(hex, alpha){
 
 /* ── KEYBOARD ── */
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){if(document.getElementById('log-view').classList.contains('open')){navigateToList();return;}document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));closeSidebar();}
+  if(e.key==='Escape'){if(document.getElementById('log-view').classList.contains('open')){navigateToList();return;}closeSidebar();}
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('srch').focus();}
 });
 window.addEventListener('focus', refreshArchiveFromExternalChange);
